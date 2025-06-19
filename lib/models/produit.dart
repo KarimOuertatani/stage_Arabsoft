@@ -4,7 +4,7 @@ class Produit {
   final String? description;
   final double prix;
   final int quantite;
-  final String? image; // Base64 ou null
+  final String? image;
   final Categorie categorie;
   final Utilisateur fournisseur;
 
@@ -50,13 +50,31 @@ class Categorie {
 class Utilisateur {
   final int id;
   final String nom;
+  final String? prenom;
+  final String? email;
+  final String? numeroTelephone;
+  final String? dateNaissance;
+  final String? typeUtilisateur;
 
-  Utilisateur({required this.id, required this.nom});
+  Utilisateur({
+    required this.id,
+    required this.nom,
+    this.prenom,
+    this.email,
+    this.numeroTelephone,
+    this.dateNaissance,
+    this.typeUtilisateur,
+  });
 
   factory Utilisateur.fromJson(Map<String, dynamic> json) {
     return Utilisateur(
       id: json['id'],
-      nom: json['nom'] ?? '', // Gère les cas où nom est null
+      nom: json['nom'] ?? '',
+      prenom: json['prenom'],
+      email: json['email'],
+      numeroTelephone: json['numeroTelephone'],
+      dateNaissance: json['dateNaissance'],
+      typeUtilisateur: json['typeUtilisateur'],
     );
   }
 }
