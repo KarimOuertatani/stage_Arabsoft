@@ -4,13 +4,13 @@ import com.ouertatani.gestionproduit.model.Categorie;
 import com.ouertatani.gestionproduit.model.Produit;
 import com.ouertatani.gestionproduit.model.Utilisateur;
 import com.ouertatani.gestionproduit.service.ProduitService;
-import jakarta.persistence.EntityNotFoundException;
+import javax.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import jakarta.validation.Valid;
+import javax.validation.Valid;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -83,6 +83,7 @@ public class ProduitController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
+
     @PutMapping("/{id}/upload")
     public ResponseEntity<Produit> updateProduitWithImage(
             @PathVariable Integer id,
@@ -95,9 +96,6 @@ public class ProduitController {
             @RequestParam("fournisseurId") Integer fournisseurId) {
         try {
             Produit produit = produitService.getProduitById(id);
-            if (produit == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-            }
             produit.setNom(nom);
             produit.setDescription(description);
             produit.setPrix(prix);
@@ -118,6 +116,7 @@ public class ProduitController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduit(@PathVariable Integer id) {
         try {

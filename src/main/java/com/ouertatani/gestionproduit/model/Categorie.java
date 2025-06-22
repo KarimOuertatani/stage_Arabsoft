@@ -1,7 +1,7 @@
 package com.ouertatani.gestionproduit.model;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
+import javax.persistence.*;
+import javax.validation.constraints.*;
 import lombok.*;
 
 @Entity

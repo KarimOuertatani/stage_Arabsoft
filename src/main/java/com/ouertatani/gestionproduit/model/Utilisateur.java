@@ -1,8 +1,12 @@
 package com.ouertatani.gestionproduit.model;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
+import javax.persistence.*;
+import javax.validation.constraints.*;
 import lombok.Data;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
 
 import java.time.LocalDate;
 
@@ -41,6 +45,8 @@ public class Utilisateur {
 
     @Past(message = "La date de naissance doit être dans le passé")
     @Column(name = "date_naissance")
+    @JsonSerialize(using = LocalDateSerializer.class)
+    @JsonDeserialize(using = LocalDateDeserializer.class)
     private LocalDate dateNaissance;
 
     @NotNull(message = "Le type d'utilisateur est obligatoire")

@@ -2,11 +2,12 @@ package com.ouertatani.gestionproduit.controller;
 
 import com.ouertatani.gestionproduit.model.Utilisateur;
 import com.ouertatani.gestionproduit.service.UtilisateurService;
-import jakarta.validation.Valid;
+import javax.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,6 +43,13 @@ public class UtilisateurController {
         }
     }
 
+    @PostMapping("/login")
+    public ResponseEntity<Utilisateur> login(@RequestBody LoginRequest loginRequest) {
+        Optional<Utilisateur> utilisateur = utilisateurService.authenticate(loginRequest.getEmail(), loginRequest.getMotDePasse());
+        return utilisateur.map(ResponseEntity::ok)
+                .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED).build());
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<Utilisateur> updateUtilisateur(@PathVariable Integer id, @Valid @RequestBody Utilisateur utilisateurDetails) {
         try {
@@ -49,7 +57,7 @@ public class UtilisateurController {
             return ResponseEntity.ok(updatedUtilisateur);
         } catch (IllegalArgumentException e) {
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (jakarta.persistence.EntityNotFoundException e) {
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
         }
     }
@@ -59,8 +67,36 @@ public class UtilisateurController {
         try {
             utilisateurService.deleteUtilisateur(id);
             return ResponseEntity.noContent().build();
-        } catch (jakarta.persistence.EntityNotFoundException e) {
+        } catch (EntityNotFoundException e) {
             return ResponseEntity.notFound().build();
+        }
+    }
+
+    public static class LoginRequest {
+        private String email;
+        private String motDePasse;
+
+        public LoginRequest() {}
+
+        public LoginRequest(String email, String motDePasse) {
+            this.email = email;
+            this.motDePasse = motDePasse;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public void setEmail(String email) {
+            this.email = email;
+        }
+
+        public String getMotDePasse() {
+            return motDePasse;
+        }
+
+        public void setMotDePasse(String motDePasse) {
+            this.motDePasse = motDePasse;
         }
     }
 }

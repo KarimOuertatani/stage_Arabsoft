@@ -1,9 +1,9 @@
 package com.ouertatani.gestionproduit.model;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.*;
+import javax.persistence.*;
+import javax.validation.constraints.*;
 import lombok.*;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties; // Ajouter cet import
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.math.BigDecimal;
 
 @Entity
@@ -41,12 +41,12 @@ public class Produit {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categorie_id", nullable = false)
     @NotNull(message = "Catégorie requise")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // Ajouter cette annotation
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Categorie categorie;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fournisseur_id", nullable = false)
     @NotNull(message = "Fournisseur requis")
-    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"}) // Ajouter cette annotation
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Utilisateur fournisseur;
 }

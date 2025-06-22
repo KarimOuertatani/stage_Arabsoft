@@ -2,7 +2,7 @@ package com.ouertatani.gestionproduit.service;
 
 import com.ouertatani.gestionproduit.model.Categorie;
 import com.ouertatani.gestionproduit.repository.CategorieRepository;
-import jakarta.persistence.EntityNotFoundException;
+import javax.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
