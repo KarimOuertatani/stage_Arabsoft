@@ -5,7 +5,12 @@ import 'package:gestion_produit_flutter/screens/product_list_screen.dart';
 import 'package:gestion_produit_flutter/screens/supplier_product_list_screen.dart';
 import 'package:gestion_produit_flutter/screens/supplier_profile_screen.dart' hide SupplierProfileScreen;
 import 'package:gestion_produit_flutter/screens/settings_screen.dart';
-import 'package:gestion_produit_flutter/screens/Supplier_Profile_Screen.dart' hide SupplierProfileScreen;
+import 'package:gestion_produit_flutter/screens/admin_home_screen.dart';
+import 'package:gestion_produit_flutter/screens/admin_product_list_screen.dart';
+import 'package:gestion_produit_flutter/screens/admin_supplier_list_screen.dart';
+import 'package:gestion_produit_flutter/screens/admin_client_list_screen.dart';
+import 'package:gestion_produit_flutter/screens/admin_profile_screen.dart';
+
 import 'screens/SupplierProductListScreen.dart';
 
 void main() {
@@ -43,6 +48,26 @@ class MyApp extends StatelessWidget {
         '/settings': (context) {
           final fournisseurId = ModalRoute.of(context)!.settings.arguments as int;
           return SettingsScreen(fournisseurId: fournisseurId);
+        },
+        '/admin-home': (context) {
+          final adminId = ModalRoute.of(context)!.settings.arguments as int;
+          return AdminHomeScreen(adminId: adminId);
+        },
+        '/admin-products': (context) {
+          final adminId = ModalRoute.of(context)!.settings.arguments as int;
+          return AdminProductListScreen(adminId: adminId);
+        },
+        '/admin-suppliers': (context) {
+          final adminId = ModalRoute.of(context)!.settings.arguments as int;
+          return AdminSupplierListScreen(adminId: adminId);
+        },
+        '/admin-clients': (context) {
+          final adminId = ModalRoute.of(context)!.settings.arguments as int;
+          return AdminClientListScreen(adminId: adminId);
+        },
+        '/admin-profile': (context) {
+          final adminId = ModalRoute.of(context)!.settings.arguments as int;
+          return AdminProfileScreen(adminId: adminId);
         },
       },
     );

@@ -24,6 +24,16 @@ class ApiService {
     }
   }
 
+  // Compter le nombre total de produits
+  Future<int> countProduits() async {
+    try {
+      final produits = await fetchProduits();
+      return produits.length;
+    } catch (e) {
+      throw Exception('Erreur : $e');
+    }
+  }
+
   // Récupérer toutes les catégories
   Future<List<Categorie>> fetchCategories() async {
     try {
@@ -41,7 +51,7 @@ class ApiService {
     }
   }
 
-  // Récupérer tous les utilisateurs (fournisseurs)
+  // Récupérer tous les utilisateurs
   Future<List<user.Utilisateur>> fetchUtilisateurs() async {
     try {
       final response = await http
@@ -53,6 +63,26 @@ class ApiService {
       } else {
         throw Exception('Erreur HTTP : ${response.statusCode}');
       }
+    } catch (e) {
+      throw Exception('Erreur : $e');
+    }
+  }
+
+  // Récupérer les utilisateurs par type (CLIENT ou FOURNISSEUR)
+  Future<List<user.Utilisateur>> fetchUtilisateursByType(String type) async {
+    try {
+      final utilisateurs = await fetchUtilisateurs();
+      return utilisateurs.where((u) => u.typeUtilisateur == type).toList();
+    } catch (e) {
+      throw Exception('Erreur : $e');
+    }
+  }
+
+  // Compter le nombre d'utilisateurs par type
+  Future<int> countUtilisateursByType(String type) async {
+    try {
+      final utilisateurs = await fetchUtilisateursByType(type);
+      return utilisateurs.length;
     } catch (e) {
       throw Exception('Erreur : $e');
     }
@@ -106,6 +136,20 @@ class ApiService {
     }
   }
 
+  // Supprimer un utilisateur
+  Future<void> deleteUtilisateur(int id) async {
+    try {
+      final response = await http
+          .delete(Uri.parse('$baseUrl/api/utilisateurs/$id'))
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 204 && response.statusCode != 200) {
+        throw Exception('Erreur HTTP : ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur : $e');
+    }
+  }
+
   // Ajouter un produit avec image
   Future<void> addProduit({
     required String nom,
@@ -120,7 +164,7 @@ class ApiService {
       var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/api/produits/upload'));
       request.fields['nom'] = nom;
       if (description != null) request.fields['description'] = description;
-      request.fields['prix'] = prix.toStringAsFixed(2); // Compatible avec BigDecimal
+      request.fields['prix'] = prix.toStringAsFixed(2);
       request.fields['quantite'] = quantite.toString();
       request.fields['categorieId'] = categorieId.toString();
       request.fields['fournisseurId'] = fournisseurId.toString();
@@ -131,7 +175,6 @@ class ApiService {
 
       final response = await request.send().timeout(const Duration(seconds: 10));
       final responseBody = await response.stream.bytesToString();
-      print('Réponse ajout: ${response.statusCode} - $responseBody'); // Log détaillé
       if (response.statusCode != 200 && response.statusCode != 201) {
         throw Exception('Erreur HTTP: ${response.statusCode} - $responseBody');
       }
@@ -146,7 +189,7 @@ class ApiService {
       final response = await http
           .delete(Uri.parse('$baseUrl/api/produits/$id'))
           .timeout(const Duration(seconds: 5));
-      if (response.statusCode != 204) {
+      if (response.statusCode != 204 && response.statusCode != 200) {
         throw Exception('Erreur HTTP : ${response.statusCode}');
       }
     } catch (e) {
@@ -166,11 +209,10 @@ class ApiService {
     required int fournisseurId,
   }) async {
     try {
-      print('Envoi modif pour ID: $id'); // Log pour vérifier l'ID
       var request = http.MultipartRequest('PUT', Uri.parse('$baseUrl/api/produits/$id/upload'));
       request.fields['nom'] = nom;
       if (description != null) request.fields['description'] = description;
-      request.fields['prix'] = prix.toStringAsFixed(2); // Compatible avec BigDecimal
+      request.fields['prix'] = prix.toStringAsFixed(2);
       request.fields['quantite'] = quantite.toString();
       request.fields['categorieId'] = categorieId.toString();
       request.fields['fournisseurId'] = fournisseurId.toString();
@@ -181,7 +223,6 @@ class ApiService {
 
       final response = await request.send().timeout(const Duration(seconds: 10));
       final responseBody = await response.stream.bytesToString();
-      print('Réponse modif: ${response.statusCode} - $responseBody'); // Log détaillé
       if (response.statusCode != 200) {
         throw Exception('Erreur HTTP: ${response.statusCode} - $responseBody');
       }

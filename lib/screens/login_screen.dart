@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gestion_produit_flutter/services/api_service.dart';
 import 'package:gestion_produit_flutter/screens/register_screen.dart';
 import '../constants.dart';
+import '../models/utilisateur.dart' as user;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -33,9 +34,11 @@ class _LoginScreenState extends State<LoginScreen> {
       if (utilisateur != null) {
         if (utilisateur.typeUtilisateur == 'CLIENT') {
           Navigator.pushReplacementNamed(context, '/client-products');
-        } else if (utilisateur.typeUtilisateur == 'FOURNISSEUR' ||
-            utilisateur.typeUtilisateur == 'ADMIN') {
+        } else if (utilisateur.typeUtilisateur == 'FOURNISSEUR') {
           Navigator.pushReplacementNamed(context, '/products',
+              arguments: utilisateur.id);
+        } else if (utilisateur.typeUtilisateur == 'ADMIN') {
+          Navigator.pushReplacementNamed(context, '/admin-home',
               arguments: utilisateur.id);
         } else {
           throw Exception('Type d\'utilisateur inconnu');
