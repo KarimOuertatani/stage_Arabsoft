@@ -58,6 +58,54 @@ class ApiService {
     }
   }
 
+  // Récupérer un utilisateur par ID
+  Future<user.Utilisateur> fetchUtilisateur(int id) async {
+    try {
+      final response = await http
+          .get(Uri.parse('$baseUrl/api/utilisateurs/$id'))
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        return user.Utilisateur.fromJson(jsonDecode(response.body));
+      } else {
+        throw Exception('Erreur HTTP : ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur : $e');
+    }
+  }
+
+  // Modifier un utilisateur
+  Future<void> updateUtilisateur({
+    required int id,
+    required String nom,
+    required String prenom,
+    required String email,
+    String? numeroTelephone,
+    DateTime? dateNaissance,
+    required String typeUtilisateur,
+  }) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/api/utilisateurs/$id'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'nom': nom,
+          'prenom': prenom,
+          'email': email,
+          'numeroTelephone': numeroTelephone,
+          'dateNaissance': dateNaissance?.toIso8601String(),
+          'typeUtilisateur': typeUtilisateur,
+        }),
+      ).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode != 200) {
+        throw Exception('Erreur HTTP : ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur : $e');
+    }
+  }
+
   // Ajouter un produit avec image
   Future<void> addProduit({
     required String nom,

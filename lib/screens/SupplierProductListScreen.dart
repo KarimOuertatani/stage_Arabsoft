@@ -3,6 +3,7 @@ import '../services/api_service.dart';
 import '../models/produit.dart';
 import 'product_add_screen.dart';
 import 'product_edit_screen.dart';
+import 'login_screen.dart';
 
 class SupplierProductListScreen extends StatefulWidget {
   final int fournisseurId;
@@ -86,12 +87,12 @@ class _SupplierProductListScreenState extends State<SupplierProductListScreen> {
           ),
         ],
       ),
+      drawer: _buildDrawer(context),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Search Bar
             TextField(
               controller: _searchController,
               decoration: InputDecoration(
@@ -111,7 +112,6 @@ class _SupplierProductListScreenState extends State<SupplierProductListScreen> {
               onChanged: (_) => setState(() {}),
             ),
             const SizedBox(height: 16),
-            // Category Filter
             FutureBuilder<List<Categorie>>(
               future: _categoriesFuture,
               builder: (context, snapshot) {
@@ -156,7 +156,6 @@ class _SupplierProductListScreenState extends State<SupplierProductListScreen> {
               },
             ),
             const SizedBox(height: 16),
-            // Product Table
             Expanded(
               child: FutureBuilder<List<Produit>>(
                 future: _produitsFuture,
@@ -314,6 +313,67 @@ class _SupplierProductListScreenState extends State<SupplierProductListScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Drawer _buildDrawer(BuildContext context) {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(color: primaryColor),
+            child: const Text(
+              'Menu Fournisseur',
+              style: TextStyle(color: Colors.white, fontSize: 24),
+            ),
+          ),
+          ListTile(
+            leading: const Icon(Icons.person),
+            title: const Text('Mon Profil'),
+            selected: ModalRoute.of(context)?.settings.name == '/profile',
+            onTap: () {
+              Navigator.pop(context);
+              if (ModalRoute.of(context)?.settings.name != '/profile') {
+                Navigator.pushReplacementNamed(context, '/profile',
+                    arguments: widget.fournisseurId);
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.inventory),
+            title: const Text('Mes Produits'),
+            selected: ModalRoute.of(context)?.settings.name == '/products',
+            onTap: () {
+              Navigator.pop(context);
+              if (ModalRoute.of(context)?.settings.name != '/products') {
+                Navigator.pushReplacementNamed(context, '/products',
+                    arguments: widget.fournisseurId);
+              }
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.settings),
+            title: const Text('Paramètres'),
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, '/settings',
+                  arguments: widget.fournisseurId);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Se Déconnecter', style: TextStyle(color: Colors.red)),
+            onTap: () {
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
+                (route) => false,
+              );
+            },
+          ),
+        ],
       ),
     );
   }

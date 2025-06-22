@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gestion_produit_flutter/services/api_service.dart';
 import 'package:gestion_produit_flutter/screens/login_screen.dart';
-import '../constants.dart';
-import '../models/utilisateur.dart' as user;
 import 'package:intl/intl.dart';
+import '../constants.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -90,6 +89,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  Widget buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    bool obscure = false,
+    TextInputType type = TextInputType.text,
+    String? Function(String?)? validator,
+    bool readOnly = false,
+    void Function()? onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: kDefaultPaddin),
+      child: TextFormField(
+        controller: controller,
+        obscureText: obscure,
+        keyboardType: type,
+        readOnly: readOnly,
+        onTap: onTap,
+        decoration: InputDecoration(
+          hintText: hint,
+          prefixIcon: Icon(icon, color: kTextLightColor),
+          filled: true,
+          fillColor: Colors.grey[100],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+        ),
+        validator: validator,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -115,82 +147,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
               children: [
                 Text(
                   'Inscription',
-                  style: Theme.of(context)
-                      .textTheme
-                      .headlineSmall!
-                      .copyWith(
+                  style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                         fontWeight: FontWeight.bold,
                         color: kTextColor,
                       ),
                 ),
                 const SizedBox(height: kDefaultPaddin),
                 if (_errorMessage != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: kDefaultPaddin),
-                    child: Text(
-                      _errorMessage!,
-                      style: const TextStyle(color: Colors.redAccent),
-                    ),
+                  Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.redAccent),
                   ),
-                TextFormField(
+                buildTextField(
                   controller: _nomController,
-                  decoration: InputDecoration(
-                    hintText: 'Nom',
-                    prefixIcon: const Icon(Icons.person, color: kTextLightColor),
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer votre nom';
-                    }
-                    if (value.length > 50) {
-                      return 'Le nom ne doit pas dépasser 50 caractères';
-                    }
-                    return null;
-                  },
+                  hint: 'Nom',
+                  icon: Icons.person,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Veuillez entrer votre nom'
+                      : (value.length > 50 ? 'Maximum 50 caractères' : null),
                 ),
-                const SizedBox(height: kDefaultPaddin),
-                TextFormField(
+                buildTextField(
                   controller: _prenomController,
-                  decoration: InputDecoration(
-                    hintText: 'Prénom',
-                    prefixIcon: const Icon(Icons.person, color: kTextLightColor),
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer votre prénom';
-                    }
-                    if (value.length > 50) {
-                      return 'Le prénom ne doit pas dépasser 50 caractères';
-                    }
-                    return null;
-                  },
+                  hint: 'Prénom',
+                  icon: Icons.person,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Veuillez entrer votre prénom'
+                      : (value.length > 50 ? 'Maximum 50 caractères' : null),
                 ),
-                const SizedBox(height: kDefaultPaddin),
-                TextFormField(
+                buildTextField(
                   controller: _emailController,
-                  decoration: InputDecoration(
-                    hintText: 'Email',
-                    prefixIcon: const Icon(Icons.email, color: kTextLightColor),
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
+                  hint: 'Email',
+                  icon: Icons.email,
+                  type: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Veuillez entrer votre email';
@@ -201,61 +189,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: kDefaultPaddin),
-                TextFormField(
+                buildTextField(
                   controller: _passwordController,
-                  decoration: InputDecoration(
-                    hintText: 'Mot de passe',
-                    prefixIcon: const Icon(Icons.lock, color: kTextLightColor),
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  obscureText: true,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Veuillez entrer votre mot de passe';
-                    }
-                    return null;
-                  },
+                  hint: 'Mot de passe',
+                  icon: Icons.lock,
+                  obscure: true,
+                  validator: (value) => value == null || value.isEmpty
+                      ? 'Veuillez entrer un mot de passe'
+                      : null,
                 ),
-                const SizedBox(height: kDefaultPaddin),
-                TextFormField(
+                buildTextField(
                   controller: _phoneController,
-                  decoration: InputDecoration(
-                    hintText: 'Numéro de téléphone (optionnel)',
-                    prefixIcon: const Icon(Icons.phone, color: kTextLightColor),
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  keyboardType: TextInputType.phone,
-                  validator: (value) {
-                    if (value != null && value.isNotEmpty && value.length > 20) {
-                      return 'Le numéro ne doit pas dépasser 20 caractères';
-                    }
-                    return null;
-                  },
+                  hint: 'Téléphone (optionnel)',
+                  icon: Icons.phone,
+                  type: TextInputType.phone,
+                  validator: (value) =>
+                      value != null && value.length > 20 ? 'Max 20 caractères' : null,
                 ),
-                const SizedBox(height: kDefaultPaddin),
-                TextFormField(
+                buildTextField(
                   controller: _dateNaissanceController,
-                  decoration: InputDecoration(
-                    hintText: 'Date de naissance (dd/MM/yyyy, optionnel)',
-                    prefixIcon: const Icon(Icons.calendar_today, color: kTextLightColor),
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
+                  hint: 'Date de naissance',
+                  icon: Icons.calendar_today,
                   readOnly: true,
                   onTap: () => _selectDate(context),
                   validator: (value) {
@@ -270,7 +224,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: kDefaultPaddin),
+                const SizedBox(height: kDefaultPaddin / 2),
                 Text(
                   'S\'inscrire en tant que :',
                   style: Theme.of(context).textTheme.titleMedium!.copyWith(color: kTextColor),
