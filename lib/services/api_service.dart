@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../models/produit.dart';
+import '../models/utilisateur.dart' as user;
 
 class ApiService {
   static const String baseUrl = 'http://10.0.2.2:8081'; // Pour émulateur Android
@@ -41,14 +42,14 @@ class ApiService {
   }
 
   // Récupérer tous les utilisateurs (fournisseurs)
-  Future<List<Utilisateur>> fetchUtilisateurs() async {
+  Future<List<user.Utilisateur>> fetchUtilisateurs() async {
     try {
       final response = await http
           .get(Uri.parse('$baseUrl/api/utilisateurs'))
           .timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         List<dynamic> jsonList = jsonDecode(response.body);
-        return jsonList.map((json) => Utilisateur.fromJson(json)).toList();
+        return jsonList.map((json) => user.Utilisateur.fromJson(json)).toList();
       } else {
         throw Exception('Erreur HTTP : ${response.statusCode}');
       }
@@ -91,6 +92,20 @@ class ApiService {
     }
   }
 
+  // Supprimer un produit
+  Future<void> deleteProduit(int id) async {
+    try {
+      final response = await http
+          .delete(Uri.parse('$baseUrl/api/produits/$id'))
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode != 204) {
+        throw Exception('Erreur HTTP : ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur : $e');
+    }
+  }
+
   // Modifier un produit avec image
   Future<void> updateProduit({
     required int id,
@@ -124,6 +139,72 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Erreur: $e');
+    }
+  }
+
+  // Connexion d'un utilisateur
+  Future<user.Utilisateur?> login(String email, String motDePasse) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/utilisateurs/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'motDePasse': motDePasse,
+        }),
+      ).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        final dynamic jsonResponse = jsonDecode(response.body);
+        if (jsonResponse is Map<String, dynamic>) {
+          return user.Utilisateur.fromJson(jsonResponse);
+        } else {
+          throw Exception('Format de réponse inattendu');
+        }
+      } else if (response.statusCode == 401) {
+        throw Exception('Email ou mot de passe incorrect');
+      } else {
+        throw Exception('Erreur HTTP : ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur : $e');
+    }
+  }
+
+  // Inscription d'un utilisateur
+  Future<user.Utilisateur?> register({
+    required String nom,
+    required String prenom,
+    required String email,
+    required String motDePasse,
+    String? numeroTelephone,
+    DateTime? dateNaissance,
+    required String typeUtilisateur,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/utilisateurs'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'nom': nom,
+          'prenom': prenom,
+          'email': email,
+          'motDePasse': motDePasse,
+          'numeroTelephone': numeroTelephone,
+          'dateNaissance': dateNaissance?.toIso8601String(),
+          'typeUtilisateur': typeUtilisateur,
+        }),
+      ).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 201) {
+        return user.Utilisateur.fromJson(jsonDecode(response.body));
+      } else if (response.statusCode == 400) {
+        throw Exception('Erreur : Email déjà utilisé ou données invalides');
+      } else {
+        throw Exception('Erreur HTTP : ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur : $e');
     }
   }
 }

@@ -1,8 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
 import '../models/produit.dart';
+import '../models/utilisateur.dart' as user;
+import '../constants.dart';
 
 class ProductEditScreen extends StatefulWidget {
   final Produit produit;
@@ -21,9 +24,9 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
   final _quantiteController = TextEditingController();
   File? _image;
   Categorie? _selectedCategorie;
-  Utilisateur? _selectedUtilisateur;
+  user.Utilisateur? _selectedUtilisateur;
   late Future<List<Categorie>> _categoriesFuture;
-  late Future<List<Utilisateur>> _utilisateursFuture;
+  late Future<List<user.Utilisateur>> _utilisateursFuture;
 
   @override
   void initState() {
@@ -31,7 +34,7 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
     if (widget.produit.id == null) {
       throw Exception('ID du produit invalide');
     }
-    print('Modification de produit avec ID: ${widget.produit.id}'); // Log pour débogage
+    print('Modification de produit avec ID: ${widget.produit.id}');
     _nomController.text = widget.produit.nom ?? '';
     _descriptionController.text = widget.produit.description ?? '';
     _prixController.text = widget.produit.prix?.toStringAsFixed(2) ?? '';
@@ -71,11 +74,11 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur : $e')),
         );
-        print('Erreur lors de la modification : $e'); // Log pour débogage
+        print('Erreur lors de la modification : $e');
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vérifie tous les champs')),
+        const SnackBar(content: Text('Vérifiez tous les champs')),
       );
     }
   }
@@ -95,9 +98,18 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
       appBar: AppBar(
         title: const Text('Modifier un produit'),
         centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: SvgPicture.asset(
+            'assets/icons/back.svg',
+            colorFilter: const ColorFilter.mode(kTextColor, BlendMode.srcIn),
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(kDefaultPaddin),
         child: Form(
           key: _formKey,
           child: Column(
@@ -105,17 +117,43 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
             children: [
               TextFormField(
                 controller: _nomController,
-                decoration: const InputDecoration(labelText: 'Nom'),
+                decoration: InputDecoration(
+                  labelText: 'Nom',
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
                 validator: (value) => value!.isEmpty ? 'Nom requis' : null,
               ),
+              const SizedBox(height: kDefaultPaddin),
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Description'),
+                decoration: InputDecoration(
+                  labelText: 'Description',
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
                 maxLines: 3,
               ),
+              const SizedBox(height: kDefaultPaddin),
               TextFormField(
                 controller: _prixController,
-                decoration: const InputDecoration(labelText: 'Prix (€)'),
+                decoration: InputDecoration(
+                  labelText: 'Prix (€)',
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value!.isEmpty) return 'Prix requis';
@@ -125,9 +163,18 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                   return null;
                 },
               ),
+              const SizedBox(height: kDefaultPaddin),
               TextFormField(
                 controller: _quantiteController,
-                decoration: const InputDecoration(labelText: 'Quantité'),
+                decoration: InputDecoration(
+                  labelText: 'Quantité',
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value!.isEmpty) return 'Quantité requise';
@@ -137,16 +184,16 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: kDefaultPaddin),
               FutureBuilder<List<Categorie>>(
                 future: _categoriesFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator();
+                    return const CircularProgressIndicator(color: kTextColor);
                   } else if (snapshot.hasError) {
-                    return Text('Erreur : ${snapshot.error}');
+                    return Text('Erreur : ${snapshot.error}', style: const TextStyle(color: Colors.redAccent));
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Text('Aucune catégorie trouvée');
+                    return const Text('Aucune catégorie trouvée', style: TextStyle(color: kTextLightColor));
                   }
                   if (_selectedCategorie == null && widget.produit.categorie != null) {
                     _selectedCategorie = snapshot.data!.firstWhere(
@@ -156,7 +203,15 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                   }
                   return DropdownButtonFormField<Categorie>(
                     value: _selectedCategorie,
-                    decoration: const InputDecoration(labelText: 'Catégorie'),
+                    decoration: InputDecoration(
+                      labelText: 'Catégorie',
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
                     items: snapshot.data!.map((categorie) {
                       return DropdownMenuItem<Categorie>(
                         value: categorie,
@@ -172,16 +227,16 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                   );
                 },
               ),
-              const SizedBox(height: 16),
-              FutureBuilder<List<Utilisateur>>(
+              const SizedBox(height: kDefaultPaddin),
+              FutureBuilder<List<user.Utilisateur>>(
                 future: _utilisateursFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator();
+                    return const CircularProgressIndicator(color: kTextColor);
                   } else if (snapshot.hasError) {
-                    return Text('Erreur : ${snapshot.error}');
+                    return Text('Erreur : ${snapshot.error}', style: const TextStyle(color: Colors.redAccent));
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Text('Aucun utilisateur trouvé');
+                    return const Text('Aucun utilisateur trouvé', style: TextStyle(color: kTextLightColor));
                   }
                   if (_selectedUtilisateur == null && widget.produit.fournisseur != null) {
                     _selectedUtilisateur = snapshot.data!.firstWhere(
@@ -189,13 +244,21 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                       orElse: () => snapshot.data!.first,
                     );
                   }
-                  return DropdownButtonFormField<Utilisateur>(
+                  return DropdownButtonFormField<user.Utilisateur>(
                     value: _selectedUtilisateur,
-                    decoration: const InputDecoration(labelText: 'Fournisseur'),
+                    decoration: InputDecoration(
+                      labelText: 'Fournisseur',
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
                     items: snapshot.data!.map((utilisateur) {
-                      return DropdownMenuItem<Utilisateur>(
+                      return DropdownMenuItem<user.Utilisateur>(
                         value: utilisateur,
-                        child: Text(utilisateur.nom),
+                        child: Text('${utilisateur.nom} ${utilisateur.prenom}'),
                       );
                     }).toList(),
                     onChanged: (value) {
@@ -207,21 +270,41 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
                   );
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: kDefaultPaddin),
               ElevatedButton(
                 onPressed: _pickImage,
-                child: const Text('Choisir une image'),
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  backgroundColor: const Color(0xFF3D82AE),
+                ),
+                child: const Text(
+                  'Choisir une image',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                ),
               ),
               if (_image != null)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  padding: const EdgeInsets.symmetric(vertical: kDefaultPaddin),
                   child: Image.file(_image!, height: 100, errorBuilder: (context, error, stackTrace) => const Text('Erreur image')),
                 ),
-              const SizedBox(height: 16),
+              const SizedBox(height: kDefaultPaddin),
               Center(
                 child: ElevatedButton(
                   onPressed: _submitForm,
-                  child: const Text('Modifier le produit'),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    backgroundColor: const Color(0xFF3D82AE),
+                  ),
+                  child: const Text(
+                    'Modifier le produit',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],

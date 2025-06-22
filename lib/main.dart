@@ -1,6 +1,5 @@
-
 import 'package:flutter/material.dart';
-import 'screens/product_list_screen.dart';
+import 'screens/login_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,18 +11,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Gestion Produits',
+      title: 'Gestion Produit',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        cardTheme: CardThemeData( // Utilisation de CardThemeData correctement
-          elevation: 4,
-          margin: const EdgeInsets.all(8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const ProductListScreen(),
+      home: const LoginScreen(),
     );
   }
 }
