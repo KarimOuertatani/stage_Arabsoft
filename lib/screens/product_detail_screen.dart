@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../services/api_service.dart';
 import '../models/produit.dart';
-import 'product_edit_screen.dart';
 import '../constants.dart';
+import 'product_edit_screen.dart';
+import 'panier_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final Produit produit;
@@ -17,6 +18,7 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   late Produit _produit;
+  final int clientId = 1; // TODO: Remplacer par utilisateur connecté si nécessaire
 
   @override
   void initState() {
@@ -39,49 +41,46 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
   }
 
-  Widget _buildImage() {
-    if (_produit.image == null) {
-      return const Center(
-        child: Icon(
-          Icons.image_not_supported,
-          size: 100,
-          color: kTextLightColor,
-        ),
-      );
-    }
+  void _acheterProduit() async {
     try {
-      final decodedImage = base64Decode(_produit.image!);
-      return Hero(
-        tag: "${_produit.id}",
-        child: Image.memory(
-          decodedImage,
-          fit: BoxFit.contain,
-          height: 200,
-          errorBuilder: (context, error, stackTrace) => const Center(
-            child: Icon(
-              Icons.error,
-              size: 100,
-              color: Colors.redAccent,
-            ),
-          ),
-        ),
+      await ApiService().ajouterProduitAuPanier(
+        clientId: clientId,
+        produitId: _produit.id,
+        quantite: 1,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Produit ajouté au panier')),
       );
     } catch (e) {
-      return const Center(
-        child: Icon(
-          Icons.error,
-          size: 100,
-          color: Colors.redAccent,
-        ),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur lors de l'ajout au panier : $e")),
       );
+    }
+  }
+
+  Widget _buildImage() {
+    if (_produit.image == null) {
+      return const Icon(Icons.image_not_supported, size: 100);
+    }
+
+    try {
+      final decodedImage = base64Decode(_produit.image!);
+      return Image.memory(
+        decodedImage,
+        height: 200,
+        fit: BoxFit.contain,
+      );
+    } catch (e) {
+      return const Icon(Icons.error, size: 100, color: Colors.redAccent);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final Size size = MediaQuery.of(context).size;
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -94,33 +93,27 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ),
         actions: [
           IconButton(
-            icon: SvgPicture.asset(
-              "assets/icons/search.svg",
-              colorFilter: const ColorFilter.mode(kTextColor, BlendMode.srcIn),
-            ),
+            icon: SvgPicture.asset("assets/icons/search.svg"),
             onPressed: () {},
           ),
           IconButton(
-            icon: SvgPicture.asset(
-              "assets/icons/cart.svg",
-              colorFilter: const ColorFilter.mode(kTextColor, BlendMode.srcIn),
-            ),
-            onPressed: () {},
+            icon: SvgPicture.asset("assets/icons/cart.svg"),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => PanierScreen(clientId: clientId)),
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.edit, color: kTextColor),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => ProductEditScreen(produit: _produit),
-                ),
-              ).then((_) {
-                _refreshProduit();
-              });
+                MaterialPageRoute(builder: (context) => ProductEditScreen(produit: _produit)),
+              ).then((_) => _refreshProduit());
             },
           ),
-          const SizedBox(width: kDefaultPaddin / 2),
         ],
       ),
       body: SingleChildScrollView(
@@ -132,11 +125,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 children: [
                   Container(
                     margin: EdgeInsets.only(top: size.height * 0.3),
-                    padding: EdgeInsets.only(
-                      top: size.height * 0.12,
-                      left: kDefaultPaddin,
-                      right: kDefaultPaddin,
-                    ),
+                    padding: const EdgeInsets.all(kDefaultPaddin),
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.only(
@@ -147,24 +136,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Quantité : ${_produit.quantite}',
-                          style: const TextStyle(color: kTextColor),
-                        ),
-                        const SizedBox(height: kDefaultPaddin / 2),
-                        Text(
-                          'Fournisseur : ${_produit.fournisseur.nom}',
-                          style: const TextStyle(color: kTextColor),
-                        ),
-                        if (_produit.fournisseur.email != null) ...[
-                          const SizedBox(height: kDefaultPaddin / 4),
-                          Text(
-                            'Email : ${_produit.fournisseur.email}',
-                            style: const TextStyle(color: kTextLightColor),
-                          ),
-                        ],
-                        const SizedBox(height: kDefaultPaddin / 2),
+                        Text('Quantité : ${_produit.quantite}'),
+                        Text('Fournisseur : ${_produit.fournisseur.nom}'),
+                        if (_produit.fournisseur.email != null)
+                          Text('Email : ${_produit.fournisseur.email}'),
                         if (_produit.description != null) ...[
+                          const SizedBox(height: 10),
                           Text(
                             'Description',
                             style: Theme.of(context)
@@ -172,60 +149,66 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                 .titleMedium!
                                 .copyWith(fontWeight: FontWeight.bold),
                           ),
-                          const SizedBox(height: kDefaultPaddin / 4),
-                          Text(
-                            _produit.description!,
-                            style: const TextStyle(height: 1.5, color: kTextColor),
-                          ),
-                          const SizedBox(height: kDefaultPaddin / 2),
+                          Text(_produit.description!),
                         ],
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: kDefaultPaddin),
-                          child: ElevatedButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Produit ajouté au panier')),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              minimumSize: const Size(double.infinity, 48),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(18),
-                              ),
-                              backgroundColor: const Color(0xFF3D82AE),
-                            ),
-                            child: const Text(
-                              "Acheter",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: _acheterProduit,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF3D82AE),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                ),
+                                child: const Text("Acheter",
+                                    style: TextStyle(color: Colors.white)),
                               ),
                             ),
-                          ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          PanierScreen(clientId: clientId),
+                                    ),
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.grey,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                ),
+                                child: const Text("Voir Panier",
+                                    style: TextStyle(color: Colors.white)),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: kDefaultPaddin),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: kDefaultPaddin),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          _produit.categorie.nom,
-                          style: const TextStyle(color: kTextColor),
-                        ),
+                        Text(_produit.categorie.nom),
                         Text(
                           _produit.nom,
                           style: Theme.of(context)
                               .textTheme
                               .titleLarge!
-                              .copyWith(
-                                color: kTextColor,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              .copyWith(fontWeight: FontWeight.bold),
                         ),
-                        const SizedBox(height: kDefaultPaddin),
+                        const SizedBox(height: 10),
                         Row(
                           children: [
                             RichText(
@@ -236,19 +219,19 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                                     style: TextStyle(color: kTextColor),
                                   ),
                                   TextSpan(
-                                    text: "${_produit.prix.toStringAsFixed(2)}€",
+                                    text:
+                                        "${_produit.prix.toStringAsFixed(2)} €",
                                     style: Theme.of(context)
                                         .textTheme
                                         .headlineSmall!
                                         .copyWith(
-                                          color: kTextColor,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                            color: kTextColor,
+                                            fontWeight: FontWeight.bold),
                                   ),
                                 ],
                               ),
                             ),
-                            const SizedBox(width: kDefaultPaddin),
+                            const SizedBox(width: 10),
                             Expanded(child: _buildImage()),
                           ],
                         ),

@@ -1,5 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:gestion_produit_flutter/models/commande.dart';
+import 'package:gestion_produit_flutter/models/commande_produit.dart';
+import 'package:gestion_produit_flutter/models/livraison.dart';
 import 'package:http/http.dart' as http;
 import '../models/produit.dart';
 import '../models/utilisateur.dart' as user;
@@ -296,4 +299,63 @@ class ApiService {
       throw Exception('Erreur : $e');
     }
   }
+
+  Future<Commande?> fetchPanier(int clientId) async {
+  final response = await http.get(Uri.parse('$baseUrl/api/commande/panier/$clientId'));
+  if (response.statusCode == 200 && response.body.isNotEmpty) {
+    return Commande.fromJson(json.decode(response.body));
+  }
+  return null;
+}
+
+Future<void> ajouterProduitAuPanier({
+  required int clientId,
+  required int produitId,
+  required int quantite,
+}) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/commande/acheter'),
+    headers: {'Content-Type': 'application/json'},
+    body: json.encode({
+      'clientId': clientId,
+      'produitId': produitId,
+      'quantite': quantite,
+    }),
+  );
+  if (response.statusCode != 200) {
+    throw Exception('Erreur lors de l\'ajout au panier');
+  }
+}
+
+Future<List<CommandeProduit>> fetchProduitsDuPanier(int commandeId) async {
+  final response = await http.get(Uri.parse('$baseUrl/api/commande-produits/commande/$commandeId'));
+  if (response.statusCode == 200) {
+    return (json.decode(response.body) as List)
+        .map((json) => CommandeProduit.fromJson(json))
+        .toList();
+  } else {
+    throw Exception('Erreur lors du chargement du panier');
+  }
+}
+
+
+Future<void> confirmerCommande(int commandeId, String adresse) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/commande/confirmer'),
+    headers: {'Content-Type': 'application/json'},
+    body: json.encode({
+      'commandeId': commandeId,
+      'adresseLivraison': adresse,
+    }),
+  );
+  if (response.statusCode != 200) {
+    throw Exception('Erreur lors de la confirmation');
+  }
+}
+
+  Future<List<Livraison>> fetchLivraisons() async {
+  return []; // À remplacer plus tard par l'appel réel à l'API
+}
+
+
 }

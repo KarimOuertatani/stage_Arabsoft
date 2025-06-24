@@ -89,8 +89,9 @@ class _ProductListScreenState extends State<ProductListScreen> {
         backgroundColor: primaryColor,
         title: const Text('Liste des Produits'),
         actions: [
+          // Bouton + (ajout produit)
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.add, color: Colors.white),
             onPressed: () {
               Navigator.push(
                 context,
@@ -125,7 +126,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
             ),
             const SizedBox(height: 12),
 
-            // Catégories en chips
+            // Catégories
             FutureBuilder<List<Categorie>>(
               future: _categoriesFuture,
               builder: (context, snapshot) {
@@ -176,7 +177,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
 
             const SizedBox(height: 12),
 
-            // Liste produits en grille
+            // Liste produits
             Expanded(
               child: FutureBuilder<List<Produit>>(
                 future: _produitsFuture,
