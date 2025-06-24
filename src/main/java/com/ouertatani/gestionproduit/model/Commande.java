@@ -24,6 +24,10 @@ public class Commande {
     @Enumerated(EnumType.STRING)
     private StatutCommande statut = StatutCommande.EN_ATTENTE;
 
+    @Column(nullable = false)
+    private Double total = 0.0;
+
+
     @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL)
     @JsonManagedReference  // ← empêche la boucle avec CommandeProduit
     private List<CommandeProduit> produits;

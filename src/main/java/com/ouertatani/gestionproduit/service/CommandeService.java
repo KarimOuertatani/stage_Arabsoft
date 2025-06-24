@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -23,15 +24,28 @@ public class CommandeService {
 
         Commande commande = commandeRepository
                 .findByClientIdAndStatut(clientId, Commande.StatutCommande.EN_ATTENTE)
-                .orElseGet(() -> commandeRepository.save(
-                        new Commande(null, null, clientId, Commande.StatutCommande.EN_ATTENTE, null, null)
-                ));
+                .orElseGet(() -> {
+                    Commande nouvelleCommande = new Commande();
+                    nouvelleCommande.setClientId(clientId);
+                    nouvelleCommande.setDateCommande(LocalDateTime.now());
+                    nouvelleCommande.setStatut(Commande.StatutCommande.EN_ATTENTE);
+                    nouvelleCommande.setTotal(0.0);
+                    return commandeRepository.save(nouvelleCommande);
+                });
 
         CommandeProduit cp = new CommandeProduit(null, commande, produit, quantite, produit.getPrix());
         commandeProduitRepository.save(cp);
 
+        // Calcul du total
+        BigDecimal montantAjoute = produit.getPrix().multiply(BigDecimal.valueOf(quantite));
+        commande.setTotal(commande.getTotal() + montantAjoute.doubleValue());
+
+        commandeRepository.save(commande);
+
         return commande;
     }
+
+
 
     public Commande getPanierClient(Long clientId) {
         return commandeRepository
