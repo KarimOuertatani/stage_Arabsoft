@@ -38,15 +38,47 @@ class _PanierScreenState extends State<PanierScreen> {
         _loading = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erreur chargement panier: $e")),
+        SnackBar(content: Text("Erreur lors du chargement du panier : $e")),
+      );
+    }
+  }
+
+  Future<void> _augmenterQuantite(int commandeProduitId) async {
+    try {
+      await ApiService().augmenterQuantite(commandeProduitId);
+      await _loadPanier();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur lors de l'augmentation de la quantité : $e")),
+      );
+    }
+  }
+
+  Future<void> _diminuerQuantite(int commandeProduitId) async {
+    try {
+      await ApiService().diminuerQuantite(commandeProduitId);
+      await _loadPanier();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur lors de la diminution de la quantité : $e")),
+      );
+    }
+  }
+
+  Future<void> _supprimerProduit(int commandeProduitId) async {
+    try {
+      await ApiService().supprimerProduitDuPanier(commandeProduitId);
+      await _loadPanier();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Erreur lors de la suppression du produit : $e")),
       );
     }
   }
 
   Future<void> _confirmerCommande() async {
     if (_commande != null && _adresseController.text.isNotEmpty) {
-      await ApiService()
-          .confirmerCommande(_commande!.id!, _adresseController.text);
+      await ApiService().confirmerCommande(_commande!.id!, _adresseController.text);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Commande confirmée et livraison créée")),
       );
@@ -54,10 +86,15 @@ class _PanierScreenState extends State<PanierScreen> {
     }
   }
 
+  double get _total {
+    return _produits.fold(
+      0.0,
+      (sum, cp) => sum + (cp.prixUnitaire * cp.quantite),
+    );
+  }
+
   Widget _buildImage(String? base64Image) {
-    if (base64Image == null) {
-      return const Icon(Icons.image_not_supported, size: 48);
-    }
+    if (base64Image == null) return const Icon(Icons.image_not_supported, size: 48);
     try {
       final bytes = base64Decode(base64Image);
       return Image.memory(
@@ -87,14 +124,10 @@ class _PanierScreenState extends State<PanierScreen> {
                         itemBuilder: (context, index) {
                           final cp = _produits[index];
                           final produit = cp.produit;
-
-                          if (produit == null) {
-                            return const SizedBox.shrink();
-                          }
+                          if (produit == null) return const SizedBox.shrink();
 
                           return Card(
-                            margin: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
+                            margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             child: ListTile(
                               leading: ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
@@ -104,20 +137,45 @@ class _PanierScreenState extends State<PanierScreen> {
                               subtitle: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text("Quantité : ${cp.quantite}"),
-                                  Text(
-                                    "Prix unitaire : ${cp.prixUnitaire.toStringAsFixed(2)} €",
+                                  Text("Prix unitaire : ${cp.prixUnitaire.toStringAsFixed(2)} €"),
+                                  Row(
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.remove_circle_outline),
+                                        onPressed: () => _diminuerQuantite(cp.id!),
+                                      ),
+                                      Text("Quantité : ${cp.quantite}"),
+                                      IconButton(
+                                        icon: const Icon(Icons.add_circle_outline),
+                                        onPressed: () => _augmenterQuantite(cp.id!),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
-                              trailing: Text(
-                                "${(cp.prixUnitaire * cp.quantite).toStringAsFixed(2)} €",
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold),
+                              trailing: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    "${(cp.prixUnitaire * cp.quantite).toStringAsFixed(2)} €",
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, color: Colors.red),
+                                    onPressed: () => _supprimerProduit(cp.id!),
+                                  ),
+                                ],
                               ),
                             ),
                           );
                         },
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        "Total : ${_total.toStringAsFixed(2)} €",
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
                     Padding(
@@ -138,7 +196,7 @@ class _PanierScreenState extends State<PanierScreen> {
                         onPressed: _confirmerCommande,
                         style: ElevatedButton.styleFrom(
                           minimumSize: const Size.fromHeight(50),
-                          backgroundColor: Colors.green,
+                          backgroundColor: const Color.fromARGB(255, 6, 79, 8),
                         ),
                       ),
                     ),

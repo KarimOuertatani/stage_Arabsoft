@@ -301,61 +301,88 @@ class ApiService {
   }
 
   Future<Commande?> fetchPanier(int clientId) async {
-  final response = await http.get(Uri.parse('$baseUrl/api/commande/panier/$clientId'));
-  if (response.statusCode == 200 && response.body.isNotEmpty) {
-    return Commande.fromJson(json.decode(response.body));
+    final response = await http.get(Uri.parse('$baseUrl/api/commande/panier/$clientId'));
+    if (response.statusCode == 200 && response.body.isNotEmpty) {
+      return Commande.fromJson(json.decode(response.body));
+    }
+    return null;
   }
-  return null;
-}
 
-Future<void> ajouterProduitAuPanier({
-  required int clientId,
-  required int produitId,
-  required int quantite,
-}) async {
-  final response = await http.post(
-    Uri.parse('$baseUrl/api/commande/acheter'),
-    headers: {'Content-Type': 'application/json'},
-    body: json.encode({
-      'clientId': clientId,
-      'produitId': produitId,
-      'quantite': quantite,
-    }),
-  );
-  if (response.statusCode != 200) {
-    throw Exception('Erreur lors de l\'ajout au panier');
+  Future<void> ajouterProduitAuPanier({
+    required int clientId,
+    required int produitId,
+    required int quantite,
+  }) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/commande/acheter'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'clientId': clientId,
+        'produitId': produitId,
+        'quantite': quantite,
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Erreur lors de l\'ajout au panier');
+    }
   }
-}
 
-Future<List<CommandeProduit>> fetchProduitsDuPanier(int commandeId) async {
-  final response = await http.get(Uri.parse('$baseUrl/api/commande-produits/commande/$commandeId'));
-  if (response.statusCode == 200) {
-    return (json.decode(response.body) as List)
-        .map((json) => CommandeProduit.fromJson(json))
-        .toList();
-  } else {
-    throw Exception('Erreur lors du chargement du panier');
+  Future<List<CommandeProduit>> fetchProduitsDuPanier(int commandeId) async {
+    final response = await http.get(Uri.parse('$baseUrl/api/commande-produits/commande/$commandeId'));
+    if (response.statusCode == 200) {
+      return (json.decode(response.body) as List)
+          .map((json) => CommandeProduit.fromJson(json))
+          .toList();
+    } else {
+      throw Exception('Erreur lors du chargement du panier');
+    }
   }
-}
 
-
-Future<void> confirmerCommande(int commandeId, String adresse) async {
-  final response = await http.post(
-    Uri.parse('$baseUrl/api/commande/confirmer'),
-    headers: {'Content-Type': 'application/json'},
-    body: json.encode({
-      'commandeId': commandeId,
-      'adresseLivraison': adresse,
-    }),
-  );
-  if (response.statusCode != 200) {
-    throw Exception('Erreur lors de la confirmation');
+  Future<void> confirmerCommande(int commandeId, String adresse) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/commande/confirmer'),
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'commandeId': commandeId,
+        'adresseLivraison': adresse,
+      }),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Erreur lors de la confirmation');
+    }
   }
-}
 
   Future<List<Livraison>> fetchLivraisons() async {
-  return []; // À remplacer plus tard par l'appel réel à l'API
-}
+    return []; // À remplacer plus tard par l'appel réel à l'API
+  }
 
+  Future<void> supprimerProduitDuPanier(int commandeProduitId) async {
+    final response = await http.delete(
+      Uri.parse('$baseUrl/api/commande-produits/$commandeProduitId'),
+    );
 
+    if (response.statusCode != 200 && response.statusCode != 204) {
+      throw Exception('Échec suppression produit');
+    }
+  }
+
+  Future<void> augmenterQuantite(int commandeProduitId) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/api/commande-produits/commande-produits/$commandeProduitId/augmenter'),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Échec augmentation quantité');
+    }
+  }
+
+  Future<void> diminuerQuantite(int commandeProduitId) async {
+    final response = await http.put(
+      Uri.parse('$baseUrl/api/commande-produits/commande-produits/$commandeProduitId/diminuer'),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Échec diminution quantité');
+    }
+  }
 }
