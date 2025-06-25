@@ -41,4 +41,21 @@ public class CommandeProduitController {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/commande-produits/{id}/augmenter")
+    public ResponseEntity<?> augmenterQuantite(@PathVariable Long id) {
+        return ResponseEntity.ok(service.augmenterQuantite(id));
+    }
+
+    @PutMapping("/commande-produits/{id}/diminuer")
+    public ResponseEntity<?> diminuerQuantite(@PathVariable Long id) {
+        return ResponseEntity.ok(service.diminuerQuantite(id));
+    }
+
+    @DeleteMapping("/commande-produits/{id}")
+    public ResponseEntity<?> supprimer(@PathVariable Long id) {
+        service.supprimer(id);
+        return ResponseEntity.ok().build();
+    }
+
 }
