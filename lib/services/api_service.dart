@@ -385,4 +385,21 @@ class ApiService {
       throw Exception('Échec diminution quantité');
     }
   }
+
+  Future<String> createPaymentIntent(int amount) async {
+  if (amount <= 0) throw Exception('Montant invalide: $amount');
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/stripe/create-payment-intent?amount=$amount'), // Correction de '/stripe' à '/api/stripe'
+    headers: {'Content-Type': 'application/json'},
+  ).timeout(const Duration(seconds: 10));
+  print("Réponse status: ${response.statusCode}, body: ${response.body}"); // Débogage
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    return data['clientSecret'] as String;
+  } else {
+    final data = json.decode(response.body);
+    throw Exception('Échec création paiement: ${response.statusCode} - ${data['error'] ?? 'Aucune information'}');
+  }
+}
+
 }

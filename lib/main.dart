@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:gestion_produit_flutter/screens/SupplierProductListScreen.dart';
 import 'package:gestion_produit_flutter/screens/login_screen.dart';
 import 'package:gestion_produit_flutter/screens/register_screen.dart';
 import 'package:gestion_produit_flutter/screens/product_list_screen.dart';
@@ -10,10 +12,14 @@ import 'package:gestion_produit_flutter/screens/admin_product_list_screen.dart';
 import 'package:gestion_produit_flutter/screens/admin_supplier_list_screen.dart';
 import 'package:gestion_produit_flutter/screens/admin_client_list_screen.dart';
 import 'package:gestion_produit_flutter/screens/admin_profile_screen.dart';
+import 'package:gestion_produit_flutter/screens/panier_screen.dart';
 
-import 'screens/SupplierProductListScreen.dart';
-
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialiser Stripe directement avec la clé publique
+  Stripe.publishableKey = 'pk_test_51OHotbIUNFbNVA8jlkNNnNWUGVqaOyjbHcH0s17ZXUROh8NTz8Em3Jo664QWxIRPBjVoH5s88kUAt3QROCnzbxRR00zuiPCnup'; // Remplacez par votre clé publique Stripe
+  
   runApp(const MyApp());
 }
 
@@ -23,6 +29,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'Gestion de Produits',
       theme: ThemeData(
         primarySwatch: Colors.blueGrey,
@@ -68,6 +75,10 @@ class MyApp extends StatelessWidget {
         '/admin-profile': (context) {
           final adminId = ModalRoute.of(context)!.settings.arguments as int;
           return AdminProfileScreen(adminId: adminId);
+        },
+        '/panier': (context) {
+          final clientId = ModalRoute.of(context)!.settings.arguments as int;
+          return PanierScreen(clientId: clientId);
         },
       },
     );

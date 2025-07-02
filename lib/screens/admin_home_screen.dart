@@ -15,8 +15,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   int _selectedIndex = 0;
   late Future<Map<String, int>> _statsFuture;
 
-  static const Color primaryColor = Colors.blueGrey;
-  static const Color accentColor = Colors.deepOrange;
+  static const Color primaryColor = Color(0xFF344955);
+  static const Color accentColor = Color(0xFFF9AA33);
 
   @override
   void initState() {
@@ -62,6 +62,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     }
   }
 
+  String _formatNumber(int number) {
+    if (number >= 1000000) return '${(number / 1000000).toStringAsFixed(1)}M';
+    if (number >= 1000) return '${(number / 1000).toStringAsFixed(1)}K';
+    return number.toString();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -69,7 +75,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       appBar: AppBar(
         backgroundColor: primaryColor,
         title: const Text('Tableau de Bord Admin'),
-        elevation: 2,
+        elevation: 3,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
@@ -83,8 +89,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SafeArea(
         child: FutureBuilder<Map<String, int>>(
           future: _statsFuture,
           builder: (context, snapshot) {
@@ -95,45 +100,80 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             }
 
             final stats = snapshot.data ?? {'produits': 0, 'clients': 0, 'fournisseurs': 0};
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Statistiques',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.black87),
+
+            return CustomScrollView(
+              slivers: [
+                SliverPadding(
+                  padding: const EdgeInsets.all(16),
+                  sliver: SliverToBoxAdapter(
+                    child: Text(
+                      'Statistiques',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 16),
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
-                  childAspectRatio: 1.5,
-                  children: [
-                    _buildStatCard(
-                      title: 'Produits',
-                      count: stats['produits']!,
-                      icon: Icons.inventory,
-                      color: accentColor,
+                SliverPadding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  sliver: SliverGrid(
+                    delegate: SliverChildListDelegate([
+                      _buildStatCard(
+                        title: 'Produits',
+                        count: stats['produits']!,
+                        icon: Icons.inventory_2,
+                        color: Colors.teal,
+                      ),
+                      _buildStatCard(
+                        title: 'Clients',
+                        count: stats['clients']!,
+                        icon: Icons.people_outline,
+                        color: Colors.blueAccent,
+                      ),
+                      _buildStatCard(
+                        title: 'Fournisseurs',
+                        count: stats['fournisseurs']!,
+                        icon: Icons.local_shipping_outlined,
+                        color: Colors.deepPurple,
+                      ),
+                    ]),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 1.4,
                     ),
-                    _buildStatCard(
-                      title: 'Clients',
-                      count: stats['clients']!,
-                      icon: Icons.people,
-                      color: Colors.teal,
-                    ),
-                    _buildStatCard(
-                      title: 'Fournisseurs',
-                      count: stats['fournisseurs']!,
-                      icon: Icons.business,
-                      color: Colors.indigo,
-                    ),
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 24),
-                const Text(
-                  'Bienvenue, Administrateur !',
-                  style: TextStyle(fontSize: 18, color: Colors.black54),
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: primaryColor,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.info_outline, color: Colors.white),
+                              SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  'Bienvenue, Administrateur ! Vous pouvez gérer vos données depuis ce tableau de bord.',
+                                  style: TextStyle(color: Colors.white, fontSize: 16),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             );
@@ -164,23 +204,34 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     required Color color,
   }) {
     return Card(
-      elevation: 4,
+      elevation: 5,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shadowColor: color.withOpacity(0.2),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Icon(icon, size: 40, color: color),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 16, color: Colors.black54),
+            Icon(icon, size: 32, color: color),
+            const SizedBox(height: 6),
+            Flexible(
+              child: Text(
+                title,
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
+                textAlign: TextAlign.center,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
             const SizedBox(height: 4),
             Text(
-              count.toString(),
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color),
+              _formatNumber(count),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
