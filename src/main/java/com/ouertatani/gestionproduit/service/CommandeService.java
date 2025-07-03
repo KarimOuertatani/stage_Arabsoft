@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -64,5 +66,11 @@ public class CommandeService {
         livraisonRepository.save(livraison);
 
         return commande;
+    }
+    public List<CommandeDTO> getCommandesByClientId(Long clientId) {
+        List<Commande> commandes = commandeRepository.findByClientId(clientId);
+        return commandes.stream()
+                .map(CommandeDTO::new)
+                .collect(Collectors.toList());
     }
 }

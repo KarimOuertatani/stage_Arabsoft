@@ -1,11 +1,14 @@
 package com.ouertatani.gestionproduit.controller;
 
 import com.ouertatani.gestionproduit.model.Commande;
+import com.ouertatani.gestionproduit.model.CommandeDTO;
 import com.ouertatani.gestionproduit.service.CommandeService;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/commande")
@@ -37,6 +40,13 @@ public class CommandeController {
                 request.getAdresseLivraison()
         ));
     }
+    @GetMapping("/client/{clientId}")
+    public ResponseEntity<List<CommandeDTO>> getCommandesByClientId(@PathVariable Long clientId) {
+        List<CommandeDTO> commandes = service.getCommandesByClientId(clientId);
+        return ResponseEntity.ok(commandes);
+    }
+
+
 
     @Data
     public static class AchatRequest {
