@@ -47,4 +47,10 @@ flutter:
     - assets/icons/add_to_cart.svg
     - assets/icons/email.svg
     - assets/icons/password.svg
+    - assets/icons/list.png
+
+    - assets/icons/profile_icon.svg
+
+    - assets/icons/search_icon.svg
+    - assets/icons/cart_icon.svg
   

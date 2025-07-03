@@ -39,7 +39,9 @@ class _LoginScreenState extends State<LoginScreen> {
       if (utilisateur != null) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const ProductListScreen()),
+          MaterialPageRoute(
+            builder: (context) => ProductListScreen(clientId: utilisateur.id),
+          ),
         );
       } else {
         setState(() {

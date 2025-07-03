@@ -13,6 +13,10 @@ import 'package:gestion_produit_flutter/screens/admin_supplier_list_screen.dart'
 import 'package:gestion_produit_flutter/screens/admin_client_list_screen.dart';
 import 'package:gestion_produit_flutter/screens/admin_profile_screen.dart';
 import 'package:gestion_produit_flutter/screens/panier_screen.dart';
+import 'package:gestion_produit_flutter/screens/profile_page.dart';
+import 'package:gestion_produit_flutter/screens/orders_page.dart';
+import 'package:gestion_produit_flutter/screens/deliveries_page.dart';
+import 'package:gestion_produit_flutter/screens/logout_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,7 +47,30 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        '/client-products': (context) => const ProductListScreen(),
+        '/client-products': (context) {
+          final clientId = ModalRoute.of(context)!.settings.arguments as int;
+          return ProductListScreen(clientId: clientId);
+        },
+        '/panier': (context) {
+          final clientId = ModalRoute.of(context)!.settings.arguments as int;
+          return PanierScreen(clientId: clientId);
+        },
+        '/client-profile': (context) {
+          final clientId = ModalRoute.of(context)!.settings.arguments as int;
+          return ProfilePage(clientId: clientId);
+        },
+        '/client-orders': (context) {
+          final clientId = ModalRoute.of(context)!.settings.arguments as int;
+          return OrdersPage(clientId: clientId);
+        },
+        '/client-deliveries': (context) {
+          final clientId = ModalRoute.of(context)!.settings.arguments as int;
+          return DeliveriesPage(clientId: clientId);
+        },
+        '/client-logout': (context) {
+          final clientId = ModalRoute.of(context)!.settings.arguments as int;
+          return LogoutPage(clientId: clientId);
+        },
         '/products': (context) {
           final fournisseurId = ModalRoute.of(context)!.settings.arguments as int;
           return SupplierProductListScreen(fournisseurId: fournisseurId);
@@ -75,10 +102,6 @@ class MyApp extends StatelessWidget {
         '/admin-profile': (context) {
           final adminId = ModalRoute.of(context)!.settings.arguments as int;
           return AdminProfileScreen(adminId: adminId);
-        },
-        '/panier': (context) {
-          final clientId = ModalRoute.of(context)!.settings.arguments as int;
-          return PanierScreen(clientId: clientId);
         },
       },
     );

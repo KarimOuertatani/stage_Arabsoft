@@ -8,7 +8,8 @@ import '../models/produit.dart';
 import '../models/utilisateur.dart' as user;
 
 class ApiService {
-  static const String baseUrl = 'http://10.0.2.2:8081'; // Pour émulateur Android
+  //static const String baseUrl = 'http://10.0.2.2:8081'; // Pour émulateur Android
+  static const String baseUrl = 'http://192.168.1.11:8081';
 
   // Récupérer tous les produits
   Future<List<Produit>> fetchProduits() async {
@@ -352,7 +353,7 @@ class ApiService {
     }
   }
 
-  Future<List<Livraison>> fetchLivraisons() async {
+  Future<List<Livraison>> fetchLivraisons(int clientId) async {
     return []; // À remplacer plus tard par l'appel réel à l'API
   }
 
@@ -401,5 +402,82 @@ class ApiService {
     throw Exception('Échec création paiement: ${response.statusCode} - ${data['error'] ?? 'Aucune information'}');
   }
 }
-
+Future<List<Commande>> fetchOrders(int clientId) async {
+  try {
+    final response = await http
+        .get(Uri.parse('$baseUrl/api/commande/client/$clientId'))
+        .timeout(const Duration(seconds: 20));
+    print('Réponse fetchOrders: status=${response.statusCode}, body=${response.body}');
+    if (response.statusCode == 200) {
+      if (response.body.isEmpty) {
+        print('Aucune commande trouvée pour clientId: $clientId');
+        return [];
+      }
+      List<dynamic> jsonList = jsonDecode(response.body);
+      return jsonList.map((json) => Commande.fromJson(json)).toList();
+    } else {
+      print('Erreur HTTP: status=${response.statusCode}, body=${response.body}');
+      throw Exception('Erreur HTTP : ${response.statusCode}');
+    }
+  } catch (e) {
+    print('Erreur fetchOrders: $e');
+    throw Exception('Erreur de connexion à l\'API : $e');
+  }
+}
+Future<List<Livraison>> fetchLivraisons1(int clientId) async {
+  try {
+    final response = await http
+        .get(Uri.parse('$baseUrl/api/livraisons/client/$clientId'))
+        .timeout(const Duration(seconds: 5));
+    if (response.statusCode == 200) {
+      List<dynamic> jsonList = jsonDecode(response.body);
+      return jsonList.map((json) => Livraison.fromJson(json)).toList();
+    } else {
+      throw Exception('Erreur HTTP : ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Erreur : $e');
+  }
+}
+Future<void> logout(int clientId) async {
+  try {
+    final response = await http
+        .post(Uri.parse('$baseUrl/api/utilisateurs/logout/$clientId'))
+        .timeout(const Duration(seconds: 5));
+    if (response.statusCode != 200) {
+      throw Exception('Erreur HTTP : ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Erreur : $e');
+  }
+}
+Future<List<CommandeProduit>> fetchOrderDetails(int orderId) async {
+  try {
+    final response = await http
+        .get(Uri.parse('$baseUrl/api/commande-produits/commande/$orderId'))
+        .timeout(const Duration(seconds: 5));
+    if (response.statusCode == 200) {
+      List<dynamic> jsonList = jsonDecode(response.body);
+      return jsonList.map((json) => CommandeProduit.fromJson(json)).toList();
+    } else {
+      throw Exception('Erreur HTTP : ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Erreur : $e');
+  }
+}
+Future<Livraison> fetchDeliveryDetails(int livraisonId) async {
+  try {
+    final response = await http
+        .get(Uri.parse('$baseUrl/api/livraisons/$livraisonId'))
+        .timeout(const Duration(seconds: 5));
+    if (response.statusCode == 200) {
+      return Livraison.fromJson(jsonDecode(response.body));
+    } else {
+      throw Exception('Erreur HTTP : ${response.statusCode}');
+    }
+  } catch (e) {
+    throw Exception('Erreur : $e');
+  }
+}
 }

@@ -27,6 +27,7 @@ class _PanierScreenState extends State<PanierScreen> {
   bool _isLoadingMap = false;
   final _adresseController = TextEditingController();
   LatLng _selectedLocation = LatLng(36.8065, 10.1815); // Tunis par défaut
+  String _paymentMethod = 'Stripe'; // Default payment method
 
   @override
   void initState() {
@@ -97,6 +98,7 @@ class _PanierScreenState extends State<PanierScreen> {
             produits: _produits,
             adresse: _adresseController.text,
             total: _total,
+            paymentMethod: _paymentMethod,
           ),
         ),
       );
@@ -106,25 +108,34 @@ class _PanierScreenState extends State<PanierScreen> {
   }
 
   Future<void> _payer() async {
-    try {
-      final montant = (_total * 100).toInt();
-      final clientSecret = await ApiService().createPaymentIntent(montant);
-      await Stripe.instance.initPaymentSheet(
-        paymentSheetParameters: SetupPaymentSheetParameters(
-          paymentIntentClientSecret: clientSecret,
-          merchantDisplayName: 'Gestion Produit',
-          style: ThemeMode.light,
-        ),
-      );
-      await Stripe.instance.presentPaymentSheet();
+    if (_paymentMethod == 'Stripe') {
+      try {
+        final montant = (_total * 100).toInt();
+        final clientSecret = await ApiService().createPaymentIntent(montant);
+        await Stripe.instance.initPaymentSheet(
+          paymentSheetParameters: SetupPaymentSheetParameters(
+            paymentIntentClientSecret: clientSecret,
+            merchantDisplayName: 'Gestion Produit',
+            style: ThemeMode.light,
+          ),
+        );
+        await Stripe.instance.presentPaymentSheet();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Paiement réussi"),
+            backgroundColor: Color.fromRGBO(236, 60, 3, 1),
+          ),
+        );
+      } catch (e) {
+        _showError("Erreur paiement : $e");
+      }
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Paiement réussi"),
+          content: Text("Paiement à la livraison sélectionné"),
           backgroundColor: Color.fromRGBO(236, 60, 3, 1),
         ),
       );
-    } catch (e) {
-      _showError("Erreur paiement : $e");
     }
   }
 
@@ -316,6 +327,45 @@ class _PanierScreenState extends State<PanierScreen> {
         ),
       ),
     ).animate().fadeIn(duration: 600.ms, delay: 400.ms);
+
+    Widget paymentMethodSelector = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Color.fromRGBO(0, 0, 0, 0.16),
+            offset: Offset(0, 3),
+            blurRadius: 6.0,
+          ),
+        ],
+      ),
+      child: DropdownButton<String>(
+        value: _paymentMethod,
+        isExpanded: true,
+        hint: const Text(
+          "Choisir le mode de paiement",
+          style: TextStyle(color: darkGrey),
+        ),
+        items: ['Stripe', 'paiement à la livraison'].map((String method) {
+          return DropdownMenuItem<String>(
+            value: method,
+            child: Text(
+              method,
+              style: const TextStyle(color: darkGrey, fontSize: 14.0),
+            ),
+          );
+        }).toList(),
+        onChanged: (String? newValue) {
+          if (newValue != null) {
+            setState(() {
+              _paymentMethod = newValue;
+            });
+          }
+        },
+      ),
+    ).animate().fadeIn(duration: 600.ms, delay: 450.ms);
 
     Widget payerButton = InkWell(
       onTap: _payer,
@@ -542,6 +592,11 @@ class _PanierScreenState extends State<PanierScreen> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20.0),
                             child: addressInput,
+                          ),
+                          const SizedBox(height: 16),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                            child: paymentMethodSelector,
                           ),
                           const SizedBox(height: 16),
                           Padding(

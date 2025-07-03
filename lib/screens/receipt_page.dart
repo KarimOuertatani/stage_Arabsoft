@@ -12,6 +12,7 @@ class ReceiptPage extends StatelessWidget {
   final List<CommandeProduit> produits;
   final String adresse;
   final double total;
+  final String paymentMethod;
 
   const ReceiptPage({
     super.key,
@@ -19,6 +20,7 @@ class ReceiptPage extends StatelessWidget {
     required this.produits,
     required this.adresse,
     required this.total,
+    required this.paymentMethod,
   });
 
   Widget _buildImage(String? base64Image) {
@@ -69,7 +71,7 @@ class ReceiptPage extends StatelessWidget {
     Widget backButton = InkWell(
       onTap: () => Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const ProductListScreen()),
+        MaterialPageRoute(builder: (context) => ProductListScreen(clientId: 0,)),
       ),
       child: Container(
         width: MediaQuery.of(context).size.width / 1.5,
@@ -312,10 +314,10 @@ class ReceiptPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: boxShadow,
                     ),
-                    child: const Column(
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           "Méthode de paiement",
                           style: TextStyle(
                             color: darkGrey,
@@ -323,10 +325,10 @@ class ReceiptPage extends StatelessWidget {
                             fontSize: 16.0,
                           ),
                         ),
-                        SizedBox(height: 8),
+                        const SizedBox(height: 8),
                         Text(
-                          "Stripe",
-                          style: TextStyle(
+                          paymentMethod,
+                          style: const TextStyle(
                             color: darkGrey,
                             fontSize: 14.0,
                           ),

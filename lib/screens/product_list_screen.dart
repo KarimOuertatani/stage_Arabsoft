@@ -6,10 +6,16 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../services/api_service.dart';
 import '../models/produit.dart';
 import 'product_detail_screen.dart';
+import 'panier_screen.dart';
+import 'profile_page.dart';
+import 'orders_page.dart';
+import 'deliveries_page.dart';
+import 'logout_page.dart';
 import '../app_properties.dart';
 
 class ProductListScreen extends StatefulWidget {
-  const ProductListScreen({super.key});
+  final int clientId;
+  const ProductListScreen({super.key, required this.clientId});
 
   @override
   State<ProductListScreen> createState() => _ProductListScreenState();
@@ -22,12 +28,10 @@ class _ProductListScreenState extends State<ProductListScreen> with TickerProvid
   final TextEditingController _searchController = TextEditingController();
   int _selectedCategoryIndex = 0;
   late TabController tabController;
-  late TabController bottomTabController;
   final SwiperController _swiperController = SwiperController();
-  RangeValues _priceRange = const RangeValues(0, 500); // Plage de prix initiale
-  double _maxPrice = 500; // Sera mis à jour dynamiquement
+  RangeValues _priceRange = const RangeValues(0, 500);
+  double _maxPrice = 500;
 
-  // Couleurs de la template
   final Color mediumYellow = const Color(0xffF8B250);
   final Color darkGrey = const Color(0xff5E6172);
 
@@ -37,8 +41,6 @@ class _ProductListScreenState extends State<ProductListScreen> with TickerProvid
     _produitsFuture = ApiService().fetchProduits();
     _categoriesFuture = ApiService().fetchCategories();
     tabController = TabController(length: 5, vsync: this);
-    bottomTabController = TabController(length: 4, vsync: this);
-    // Écouter les changements dans le champ de recherche
     _searchController.addListener(() {
       setState(() {});
     });
@@ -48,13 +50,11 @@ class _ProductListScreenState extends State<ProductListScreen> with TickerProvid
   void dispose() {
     _searchController.dispose();
     tabController.dispose();
-    bottomTabController.dispose();
     _swiperController.dispose();
     super.dispose();
   }
 
   List<Produit> _filterProduits(List<Produit> produits) {
-    // Trouver le prix maximum pour ajuster le slider
     if (produits.isNotEmpty) {
       _maxPrice = produits.map((p) => p.prix).reduce((a, b) => a > b ? a : b);
     }
@@ -291,107 +291,130 @@ class _ProductListScreenState extends State<ProductListScreen> with TickerProvid
     });
   }
 
-  Widget _buildCustomBottomBar() {
-    return BottomAppBar(
+  Widget _buildDrawer() {
+    final List<Map<String, dynamic>> drawerItems = [
+      {
+        'icon': 'assets/icons/orders_icon.svg',
+        'label': 'Commandes',
+        'onTap': () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => OrdersPage(clientId: widget.clientId)),
+            ),
+      },
+      {
+        'icon': 'assets/icons/deliveries_icon.svg',
+        'label': 'Livraisons',
+        'onTap': () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => DeliveriesPage(clientId: widget.clientId)),
+            ),
+      },
+      {
+        'icon': 'assets/icons/profile_icon.svg',
+        'label': 'Profil',
+        'onTap': () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => ProfilePage(clientId: widget.clientId)),
+            ),
+      },
+      {
+        'icon': 'assets/icons/logout_icon.svg',
+        'label': 'Déconnexion',
+        'onTap': () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => LogoutPage(clientId: widget.clientId)),
+            ),
+      },
+    ];
+
+    return Drawer(
       child: Container(
-        height: 60,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: <Widget>[
-            IconButton(
-              icon: SvgPicture.asset(
-                'assets/icons/home_icon.svg',
-                height: 24,
-                color: bottomTabController.index == 0 ? mediumYellow : Colors.grey,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              mediumYellow.withOpacity(0.1),
+              Colors.white,
+            ],
+          ),
+        ),
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: mediumYellow,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              onPressed: () {
-                setState(() {
-                  bottomTabController.animateTo(0);
-                });
-              },
-            ),
-            IconButton(
-              icon: Icon(
-                Icons.category,
-                size: 24,
-                color: bottomTabController.index == 1 ? mediumYellow : Colors.grey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Menu',
+                    style: TextStyle(
+                      color: darkGrey,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Naviguez dans l\'application',
+                    style: TextStyle(
+                      color: darkGrey.withOpacity(0.7),
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
               ),
-              onPressed: () {
-                setState(() {
-                  bottomTabController.animateTo(1);
-                });
-              },
             ),
-            IconButton(
-              icon: Icon(
-                Icons.shopping_cart,
-                size: 24,
-                color: bottomTabController.index == 2 ? mediumYellow : Colors.grey,
-              ),
-              onPressed: () {
-                setState(() {
-                  bottomTabController.animateTo(2);
-                });
-              },
-            ),
-            IconButton(
-              icon: Icon(
-                Icons.person,
-                size: 24,
-                color: bottomTabController.index == 3 ? mediumYellow : Colors.grey,
-              ),
-              onPressed: () {
-                setState(() {
-                  bottomTabController.animateTo(3);
-                });
-              },
-            ),
+            ...drawerItems.asMap().entries.map((entry) {
+              final index = entry.key;
+              final item = entry.value;
+              return ListTile(
+                leading: SvgPicture.asset(
+                  item['icon'],
+                  height: 24,
+                  color: darkGrey,
+                ),
+                title: Text(
+                  item['label'],
+                  style: TextStyle(
+                    color: darkGrey,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context); // Close the drawer
+                  item['onTap']();
+                },
+                tileColor: Colors.transparent,
+                hoverColor: mediumYellow.withOpacity(0.2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              ).animate().fadeIn(duration: 600.ms, delay: (200 * index).ms);
+            }).toList(),
           ],
         ),
       ),
-    ).animate().fadeIn(duration: 600.ms, delay: 800.ms);
-  }
-
-  Widget _buildMainBackground() {
-    return Container(
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: const AssetImage('assets/background.jpg'),
-          fit: BoxFit.cover,
-          onError: (exception, stackTrace) {
-            print('Erreur de chargement de l\'image: $exception');
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCategoryChip(String label, int index) {
-    final isSelected = index == _selectedCategoryIndex;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: ChoiceChip(
-        label: Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: isSelected ? Colors.white : darkGrey,
-          ),
-        ),
-        selected: isSelected,
-        selectedColor: mediumYellow,
-        backgroundColor: Colors.grey.shade200,
-        shape: const StadiumBorder(),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        onSelected: (selected) {
-          setState(() {
-            _selectedCategoryIndex = index;
-            _selectedCategory = label == 'Toutes' ? null : label;
-          });
-        },
-      ).animate().fadeIn(duration: 600.ms, delay: 300.ms),
-    );
+    ).animate().slideX(
+          begin: -1.0,
+          end: 0.0,
+          duration: 600.ms,
+          curve: Curves.easeInOut,
+        );
   }
 
   Widget _buildSearchBar() {
@@ -439,7 +462,7 @@ class _ProductListScreenState extends State<ProductListScreen> with TickerProvid
             filled: true,
             fillColor: Colors.white.withOpacity(0.9),
           ),
-          onChanged: (_) => setState(() {}), // Recherche dynamique
+          onChanged: (_) => setState(() {}),
         ),
       ),
     ).animate().fadeIn(duration: 600.ms, delay: 200.ms);
@@ -481,6 +504,34 @@ class _ProductListScreenState extends State<ProductListScreen> with TickerProvid
     ).animate().fadeIn(duration: 600.ms, delay: 250.ms);
   }
 
+  Widget _buildCategoryChip(String label, int index) {
+    final isSelected = index == _selectedCategoryIndex;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: ChoiceChip(
+        label: Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: isSelected ? Colors.white : darkGrey,
+          ),
+        ),
+        selected: isSelected,
+        selectedColor: mediumYellow,
+        backgroundColor: Colors.grey.shade200,
+        shape: const StadiumBorder(),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        onSelected: (selected) {
+          setState(() {
+            _selectedCategoryIndex = index;
+            _selectedCategory = label == 'Toutes' ? null : label;
+          });
+        },
+      ).animate().fadeIn(duration: 600.ms, delay: 300.ms),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget appBar = Container(
@@ -489,21 +540,54 @@ class _ProductListScreenState extends State<ProductListScreen> with TickerProvid
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Text(
-            'Liste des Produits',
-            style: TextStyle(
-              color: darkGrey,
-              fontSize: 20.0,
-              fontWeight: FontWeight.bold,
-            ),
+          Row(
+            children: [
+              Builder(
+                builder: (BuildContext context) {
+                  return IconButton(
+                    icon: Image.asset(
+                      'assets/icons/list.png',
+                      height: 24,
+                      color: darkGrey,
+                    ),
+                    onPressed: () {
+                      Scaffold.of(context).openDrawer();
+                    },
+                  );
+                },
+              ),
+              Text(
+                'Liste des Produits',
+                style: TextStyle(
+                  color: darkGrey,
+                  fontSize: 20.0,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
-          IconButton(
-            icon: SvgPicture.asset(
-              'assets/icons/search_icon.svg',
-              height: 24,
-              color: darkGrey,
-            ),
-            onPressed: () {},
+          Row(
+            children: [
+              IconButton(
+                icon: SvgPicture.asset(
+                  'assets/icons/search_icon.svg',
+                  height: 24,
+                  color: darkGrey,
+                ),
+                onPressed: () {},
+              ),
+              IconButton(
+                icon: SvgPicture.asset(
+                  'assets/icons/cart_icon.svg',
+                  height: 24,
+                  color: darkGrey,
+                ),
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => PanierScreen(clientId: widget.clientId)),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -553,64 +637,65 @@ class _ProductListScreenState extends State<ProductListScreen> with TickerProvid
 
     return Scaffold(
       backgroundColor: Colors.white,
-      bottomNavigationBar: _buildCustomBottomBar(),
+      drawer: _buildDrawer(),
       body: Stack(
         children: [
-          _buildMainBackground(),
+          Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: const AssetImage('assets/background.jpg'),
+                fit: BoxFit.cover,
+                onError: (exception, stackTrace) {
+                  print('Erreur de chargement de l\'image: $exception');
+                },
+              ),
+            ),
+          ),
           Container(
             decoration: const BoxDecoration(color: transparentYellow),
           ),
-          TabBarView(
-            controller: bottomTabController,
-            physics: const NeverScrollableScrollPhysics(),
-            children: <Widget>[
-              SafeArea(
-                child: NestedScrollView(
-                  headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
-                    return <Widget>[
-                      SliverToBoxAdapter(child: appBar),
-                      SliverToBoxAdapter(child: _buildSearchBar()),
-                      SliverToBoxAdapter(child: _buildPriceFilter()),
-                      SliverToBoxAdapter(child: topHeader),
-                      SliverToBoxAdapter(
-                        child: FutureBuilder<List<Produit>>(
-                          future: _produitsFuture,
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const Center(child: CircularProgressIndicator());
-                            } else if (snapshot.hasError) {
-                              return Center(child: Text('Erreur : ${snapshot.error}'));
-                            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                              return const Center(child: Text('Aucun produit disponible'));
-                            }
-                            final produits = _filterProduits(snapshot.data!);
-                            return _buildProductCarousel(produits);
-                          },
-                        ),
-                      ),
-                      SliverToBoxAdapter(child: tabBar),
-                    ];
-                  },
-                  body: FutureBuilder<List<Produit>>(
-                    future: _produitsFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      } else if (snapshot.hasError) {
-                        return Center(child: Text('Erreur : ${snapshot.error}'));
-                      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Center(child: Text('Aucun produit disponible'));
-                      }
-                      final produits = _filterProduits(snapshot.data!);
-                      return _buildRecommendedList(produits);
-                    },
+          SafeArea(
+            child: NestedScrollView(
+              headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+                return <Widget>[
+                  SliverToBoxAdapter(child: appBar),
+                  SliverToBoxAdapter(child: _buildSearchBar()),
+                  SliverToBoxAdapter(child: _buildPriceFilter()),
+                  SliverToBoxAdapter(child: topHeader),
+                  SliverToBoxAdapter(
+                    child: FutureBuilder<List<Produit>>(
+                      future: _produitsFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        } else if (snapshot.hasError) {
+                          return Center(child: Text('Erreur : ${snapshot.error}'));
+                        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          return const Center(child: Text('Aucun produit disponible'));
+                        }
+                        final produits = _filterProduits(snapshot.data!);
+                        return _buildProductCarousel(produits);
+                      },
+                    ),
                   ),
-                ),
+                  SliverToBoxAdapter(child: tabBar),
+                ];
+              },
+              body: FutureBuilder<List<Produit>>(
+                future: _produitsFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Erreur : ${snapshot.error}'));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text('Aucun produit disponible'));
+                  }
+                  final produits = _filterProduits(snapshot.data!);
+                  return _buildRecommendedList(produits);
+                },
               ),
-              const Center(child: Text('Page Catégories')),
-              const Center(child: Text('Page Panier')),
-              const Center(child: Text('Page Profil')),
-            ],
+            ),
           ),
         ],
       ),
