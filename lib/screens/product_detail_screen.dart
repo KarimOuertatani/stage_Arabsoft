@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:gestion_produit_flutter/screens/panier_screen.dart';
+import 'package:gestion_produit_flutter/screens/login_screen.dart';
 import '../services/api_service.dart';
 import '../models/produit.dart';
 import '../constants.dart';
 import 'product_edit_screen.dart';
-
 
 class ProductDetailScreen extends StatefulWidget {
   final Produit produit;
@@ -19,7 +20,6 @@ class ProductDetailScreen extends StatefulWidget {
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   late Produit _produit;
-  final int clientId = 1; // TODO: Remplacer par utilisateur connecté si nécessaire
   int activeColorIndex = 0; // For color selection
   final List<Color> colorList = [
     Colors.red,
@@ -28,11 +28,20 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     Colors.green,
     Colors.yellow,
   ]; // Sample colors from template
+  final _storage = const FlutterSecureStorage();
 
   @override
   void initState() {
     super.initState();
     _produit = widget.produit;
+  }
+
+  Future<int> _getClientId() async {
+    final clientIdString = await _storage.read(key: 'client_id');
+    if (clientIdString == null) {
+      throw Exception('Client ID non trouvé. Veuillez vous reconnecter.');
+    }
+    return int.parse(clientIdString);
   }
 
   void _refreshProduit() async {
@@ -52,6 +61,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   void _acheterProduit() async {
     try {
+      final clientId = await _getClientId();
       await ApiService().ajouterProduitAuPanier(
         clientId: clientId,
         produitId: _produit.id,
@@ -65,6 +75,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Erreur lors de l'ajout au panier : $e")),
       );
+      if (e.toString().contains('Client ID non trouvé')) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+      }
     }
   }
 
@@ -90,8 +107,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final double bottomPadding = MediaQuery.of(context).padding.bottom;
-    const Color yellow = Color(0xFFFBD085); // From template
-    const Color darkGrey = Color(0xFF2F2F2F); // From template
+    const Color yellow = Color(0xFFFBD085);
+    const Color darkGrey = Color(0xFF2F2F2F);
     const List<Shadow> shadow = [
       Shadow(
         color: Color.fromRGBO(0, 0, 0, 0.16),
@@ -142,11 +159,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     );
 
     Widget panierButton = InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => PanierScreen(clientId: clientId)),
-        );
+      onTap: () async {
+        try {
+          await _getClientId(); // Check if clientId exists
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const PanierScreen()),
+          );
+        } catch (e) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Erreur : $e')),
+          );
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const LoginScreen()),
+            (route) => false,
+          );
+        }
       },
       child: Container(
         width: size.width / 2.5,
@@ -410,11 +439,23 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           ),
           IconButton(
             icon: SvgPicture.asset('assets/icons/cart.svg'),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => PanierScreen(clientId: clientId)),
-              );
+            onPressed: () async {
+              try {
+                await _getClientId(); // Check if clientId exists
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const PanierScreen()),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Erreur : $e')),
+                );
+                Navigator.pushAndRemoveUntil(
+                  context,
+                  MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  (route) => false,
+                );
+              }
             },
           ),
           IconButton(

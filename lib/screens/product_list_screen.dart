@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:card_swiper/card_swiper.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:gestion_produit_flutter/app_properties.dart';
+import 'package:gestion_produit_flutter/screens/login_screen.dart';
 import '../services/api_service.dart';
 import '../models/produit.dart';
 import 'product_detail_screen.dart';
@@ -11,11 +14,10 @@ import 'profile_page.dart';
 import 'orders_page.dart';
 import 'deliveries_page.dart';
 import 'logout_page.dart';
-import '../app_properties.dart';
+import '../constants.dart';
 
 class ProductListScreen extends StatefulWidget {
-  final int clientId;
-  const ProductListScreen({super.key, required this.clientId});
+  const ProductListScreen({super.key});
 
   @override
   State<ProductListScreen> createState() => _ProductListScreenState();
@@ -31,6 +33,7 @@ class _ProductListScreenState extends State<ProductListScreen> with TickerProvid
   final SwiperController _swiperController = SwiperController();
   RangeValues _priceRange = const RangeValues(0, 500);
   double _maxPrice = 500;
+  final _storage = const FlutterSecureStorage();
 
   final Color mediumYellow = const Color(0xffF8B250);
   final Color darkGrey = const Color(0xff5E6172);
@@ -52,6 +55,14 @@ class _ProductListScreenState extends State<ProductListScreen> with TickerProvid
     tabController.dispose();
     _swiperController.dispose();
     super.dispose();
+  }
+
+  Future<int> _getClientId() async {
+    final clientIdString = await _storage.read(key: 'client_id');
+    if (clientIdString == null) {
+      throw Exception('Client ID non trouvé');
+    }
+    return int.parse(clientIdString);
   }
 
   List<Produit> _filterProduits(List<Produit> produits) {
@@ -296,34 +307,94 @@ class _ProductListScreenState extends State<ProductListScreen> with TickerProvid
       {
         'icon': 'assets/icons/orders_icon.svg',
         'label': 'Commandes',
-        'onTap': () => Navigator.push(
+        'onTap': () async {
+          try {
+            final clientId = await _getClientId();
+            Navigator.pushNamed(
               context,
-              MaterialPageRoute(builder: (_) => OrdersPage(clientId: widget.clientId)),
-            ),
+              '/client-orders',
+              arguments: clientId,
+            );
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Erreur : $e')),
+            );
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (route) => false,
+            );
+          }
+        },
       },
       {
         'icon': 'assets/icons/deliveries_icon.svg',
         'label': 'Livraisons',
-        'onTap': () => Navigator.push(
+        'onTap': () async {
+          try {
+            final clientId = await _getClientId();
+            Navigator.pushNamed(
               context,
-              MaterialPageRoute(builder: (_) => DeliveriesPage(clientId: widget.clientId)),
-            ),
+              '/client-deliveries',
+              arguments: clientId,
+            );
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Erreur : $e')),
+            );
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (route) => false,
+            );
+          }
+        },
       },
       {
         'icon': 'assets/icons/profile_icon.svg',
         'label': 'Profil',
-        'onTap': () => Navigator.push(
+        'onTap': () async {
+          try {
+            final clientId = await _getClientId();
+            Navigator.pushNamed(
               context,
-              MaterialPageRoute(builder: (_) => ProfilePage(clientId: widget.clientId)),
-            ),
+              '/client-profile',
+              arguments: clientId,
+            );
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Erreur : $e')),
+            );
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (route) => false,
+            );
+          }
+        },
       },
       {
         'icon': 'assets/icons/logout_icon.svg',
         'label': 'Déconnexion',
-        'onTap': () => Navigator.push(
+        'onTap': () async {
+          try {
+            final clientId = await _getClientId();
+            Navigator.pushNamed(
               context,
-              MaterialPageRoute(builder: (_) => LogoutPage(clientId: widget.clientId)),
-            ),
+              '/client-logout',
+              arguments: clientId,
+            );
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Erreur : $e')),
+            );
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (route) => false,
+            );
+          }
+        },
       },
     ];
 
@@ -582,10 +653,21 @@ class _ProductListScreenState extends State<ProductListScreen> with TickerProvid
                   height: 24,
                   color: darkGrey,
                 ),
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => PanierScreen(clientId: widget.clientId)),
-                ),
+                onPressed: () async {
+                  try {
+                    await _getClientId(); // Check if clientId exists
+                    Navigator.pushNamed(context, '/panier');
+                  } catch (e) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Erreur : $e')),
+                    );
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (route) => false,
+                    );
+                  }
+                },
               ),
             ],
           ),
@@ -614,27 +696,6 @@ class _ProductListScreenState extends State<ProductListScreen> with TickerProvid
       ),
     );
 
-    Widget tabBar = Container(
-      height: 40,
-      child: TabBar(
-        tabs: const [
-          Tab(text: 'Tendance'),
-          Tab(text: 'Sports'),
-          Tab(text: 'Casques'),
-          Tab(text: 'Sans fil'),
-          Tab(text: 'Promotions'),
-        ],
-        labelStyle: const TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold),
-        unselectedLabelStyle: const TextStyle(fontSize: 14.0),
-        labelColor: mediumYellow,
-        unselectedLabelColor: Colors.grey,
-        isScrollable: true,
-        indicatorColor: mediumYellow,
-        indicatorWeight: 3,
-        controller: tabController,
-      ),
-    ).animate().fadeIn(duration: 600.ms, delay: 400.ms);
-
     return Scaffold(
       backgroundColor: Colors.white,
       drawer: _buildDrawer(),
@@ -652,7 +713,7 @@ class _ProductListScreenState extends State<ProductListScreen> with TickerProvid
             ),
           ),
           Container(
-            decoration: const BoxDecoration(color: transparentYellow),
+            decoration: BoxDecoration(color: yellow.withOpacity(0.5)),
           ),
           SafeArea(
             child: NestedScrollView(
@@ -678,7 +739,7 @@ class _ProductListScreenState extends State<ProductListScreen> with TickerProvid
                       },
                     ),
                   ),
-                  SliverToBoxAdapter(child: tabBar),
+                  SliverToBoxAdapter(child: _buildTabBar()),
                 ];
               },
               body: FutureBuilder<List<Produit>>(
@@ -700,6 +761,29 @@ class _ProductListScreenState extends State<ProductListScreen> with TickerProvid
         ],
       ),
     );
+  }
+
+  Widget _buildTabBar() {
+    return Container(
+      height: 40,
+      child: TabBar(
+        tabs: const [
+          Tab(text: 'Tendance'),
+          Tab(text: 'Sports'),
+          Tab(text: 'Casques'),
+          Tab(text: 'Sans fil'),
+          Tab(text: 'Promotions'),
+        ],
+        labelStyle: const TextStyle(fontSize: 14.0, fontWeight: FontWeight.bold),
+        unselectedLabelStyle: const TextStyle(fontSize: 14.0),
+        labelColor: mediumYellow,
+        unselectedLabelColor: Colors.grey,
+        isScrollable: true,
+        indicatorColor: mediumYellow,
+        indicatorWeight: 3,
+        controller: tabController,
+      ),
+    ).animate().fadeIn(duration: 600.ms, delay: 400.ms);
   }
 }
 

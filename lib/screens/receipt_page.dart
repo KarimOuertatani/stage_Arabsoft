@@ -71,7 +71,7 @@ class ReceiptPage extends StatelessWidget {
     Widget backButton = InkWell(
       onTap: () => Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => ProductListScreen(clientId: 0,)),
+        MaterialPageRoute(builder: (context) => const ProductListScreen()),
       ),
       child: Container(
         width: MediaQuery.of(context).size.width / 1.5,

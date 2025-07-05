@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:gestion_produit_flutter/models/commande.dart';
 import 'package:gestion_produit_flutter/models/commande_produit.dart';
 import 'package:gestion_produit_flutter/models/livraison.dart';
@@ -8,18 +9,54 @@ import '../models/produit.dart';
 import '../models/utilisateur.dart' as user;
 
 class ApiService {
-  //static const String baseUrl = 'http://10.0.2.2:8081'; // Pour émulateur Android
   static const String baseUrl = 'http://192.168.1.11:8081';
+  static const _storage = FlutterSecureStorage();
+
+  // Helper method to get the JWT token from secure storage
+  Future<String?> _getToken() async {
+    return await _storage.read(key: 'jwt_token');
+  }
+
+  // Helper method to add Authorization header to requests
+  Future<Map<String, String>> _getHeaders() async {
+    final token = await _getToken();
+    return {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
+
+  // Fetch the current authenticated user
+  Future<user.Utilisateur> fetchCurrentUser() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http
+          .get(Uri.parse('$baseUrl/api/utilisateurs/current'), headers: headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        return user.Utilisateur.fromJson(jsonDecode(response.body));
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
+        throw Exception('Erreur HTTP : ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur : $e');
+    }
+  }
 
   // Récupérer tous les produits
   Future<List<Produit>> fetchProduits() async {
     try {
+      final headers = await _getHeaders();
       final response = await http
-          .get(Uri.parse('$baseUrl/api/produits'))
+          .get(Uri.parse('$baseUrl/api/produits'), headers: headers)
           .timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         List<dynamic> jsonList = jsonDecode(response.body);
         return jsonList.map((json) => Produit.fromJson(json)).toList();
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
       } else {
         throw Exception('Erreur HTTP : ${response.statusCode}');
       }
@@ -41,12 +78,15 @@ class ApiService {
   // Récupérer toutes les catégories
   Future<List<Categorie>> fetchCategories() async {
     try {
+      final headers = await _getHeaders();
       final response = await http
-          .get(Uri.parse('$baseUrl/api/categories'))
+          .get(Uri.parse('$baseUrl/api/categories'), headers: headers)
           .timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         List<dynamic> jsonList = jsonDecode(response.body);
         return jsonList.map((json) => Categorie.fromJson(json)).toList();
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
       } else {
         throw Exception('Erreur HTTP : ${response.statusCode}');
       }
@@ -58,12 +98,15 @@ class ApiService {
   // Récupérer tous les utilisateurs
   Future<List<user.Utilisateur>> fetchUtilisateurs() async {
     try {
+      final headers = await _getHeaders();
       final response = await http
-          .get(Uri.parse('$baseUrl/api/utilisateurs'))
+          .get(Uri.parse('$baseUrl/api/utilisateurs'), headers: headers)
           .timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         List<dynamic> jsonList = jsonDecode(response.body);
         return jsonList.map((json) => user.Utilisateur.fromJson(json)).toList();
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
       } else {
         throw Exception('Erreur HTTP : ${response.statusCode}');
       }
@@ -95,11 +138,14 @@ class ApiService {
   // Récupérer un utilisateur par ID
   Future<user.Utilisateur> fetchUtilisateur(int id) async {
     try {
+      final headers = await _getHeaders();
       final response = await http
-          .get(Uri.parse('$baseUrl/api/utilisateurs/$id'))
+          .get(Uri.parse('$baseUrl/api/utilisateurs/$id'), headers: headers)
           .timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         return user.Utilisateur.fromJson(jsonDecode(response.body));
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
       } else {
         throw Exception('Erreur HTTP : ${response.statusCode}');
       }
@@ -119,9 +165,10 @@ class ApiService {
     required String typeUtilisateur,
   }) async {
     try {
+      final headers = await _getHeaders();
       final response = await http.put(
         Uri.parse('$baseUrl/api/utilisateurs/$id'),
-        headers: {'Content-Type': 'application/json'},
+        headers: headers,
         body: jsonEncode({
           'nom': nom,
           'prenom': prenom,
@@ -132,7 +179,11 @@ class ApiService {
         }),
       ).timeout(const Duration(seconds: 5));
 
-      if (response.statusCode != 200) {
+      if (response.statusCode == 200) {
+        return;
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
         throw Exception('Erreur HTTP : ${response.statusCode}');
       }
     } catch (e) {
@@ -143,10 +194,15 @@ class ApiService {
   // Supprimer un utilisateur
   Future<void> deleteUtilisateur(int id) async {
     try {
+      final headers = await _getHeaders();
       final response = await http
-          .delete(Uri.parse('$baseUrl/api/utilisateurs/$id'))
+          .delete(Uri.parse('$baseUrl/api/utilisateurs/$id'), headers: headers)
           .timeout(const Duration(seconds: 5));
-      if (response.statusCode != 204 && response.statusCode != 200) {
+      if (response.statusCode == 204 || response.statusCode == 200) {
+        return;
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
         throw Exception('Erreur HTTP : ${response.statusCode}');
       }
     } catch (e) {
@@ -165,7 +221,9 @@ class ApiService {
     required int fournisseurId,
   }) async {
     try {
+      final headers = await _getHeaders();
       var request = http.MultipartRequest('POST', Uri.parse('$baseUrl/api/produits/upload'));
+      request.headers.addAll(headers);
       request.fields['nom'] = nom;
       if (description != null) request.fields['description'] = description;
       request.fields['prix'] = prix.toStringAsFixed(2);
@@ -179,7 +237,11 @@ class ApiService {
 
       final response = await request.send().timeout(const Duration(seconds: 10));
       final responseBody = await response.stream.bytesToString();
-      if (response.statusCode != 200 && response.statusCode != 201) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return;
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
         throw Exception('Erreur HTTP: ${response.statusCode} - $responseBody');
       }
     } catch (e) {
@@ -190,10 +252,15 @@ class ApiService {
   // Supprimer un produit
   Future<void> deleteProduit(int id) async {
     try {
+      final headers = await _getHeaders();
       final response = await http
-          .delete(Uri.parse('$baseUrl/api/produits/$id'))
+          .delete(Uri.parse('$baseUrl/api/produits/$id'), headers: headers)
           .timeout(const Duration(seconds: 5));
-      if (response.statusCode != 204 && response.statusCode != 200) {
+      if (response.statusCode == 204 || response.statusCode == 200) {
+        return;
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
         throw Exception('Erreur HTTP : ${response.statusCode}');
       }
     } catch (e) {
@@ -213,7 +280,9 @@ class ApiService {
     required int fournisseurId,
   }) async {
     try {
+      final headers = await _getHeaders();
       var request = http.MultipartRequest('PUT', Uri.parse('$baseUrl/api/produits/$id/upload'));
+      request.headers.addAll(headers);
       request.fields['nom'] = nom;
       if (description != null) request.fields['description'] = description;
       request.fields['prix'] = prix.toStringAsFixed(2);
@@ -227,7 +296,11 @@ class ApiService {
 
       final response = await request.send().timeout(const Duration(seconds: 10));
       final responseBody = await response.stream.bytesToString();
-      if (response.statusCode != 200) {
+      if (response.statusCode == 200) {
+        return;
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
         throw Exception('Erreur HTTP: ${response.statusCode} - $responseBody');
       }
     } catch (e) {
@@ -236,7 +309,7 @@ class ApiService {
   }
 
   // Connexion d'un utilisateur
-  Future<user.Utilisateur?> login(String email, String motDePasse) async {
+  Future<String?> login(String email, String motDePasse) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/api/utilisateurs/login'),
@@ -248,11 +321,13 @@ class ApiService {
       ).timeout(const Duration(seconds: 5));
 
       if (response.statusCode == 200) {
-        final dynamic jsonResponse = jsonDecode(response.body);
-        if (jsonResponse is Map<String, dynamic>) {
-          return user.Utilisateur.fromJson(jsonResponse);
+        final jsonResponse = jsonDecode(response.body);
+        final token = jsonResponse['token'] as String?;
+        if (token != null) {
+          await _storage.write(key: 'jwt_token', value: token);
+          return token;
         } else {
-          throw Exception('Format de réponse inattendu');
+          throw Exception('Token non trouvé dans la réponse');
         }
       } else if (response.statusCode == 401) {
         throw Exception('Email ou mot de passe incorrect');
@@ -301,12 +376,31 @@ class ApiService {
     }
   }
 
-  Future<Commande?> fetchPanier(int clientId) async {
-    final response = await http.get(Uri.parse('$baseUrl/api/commande/panier/$clientId'));
-    if (response.statusCode == 200 && response.body.isNotEmpty) {
-      return Commande.fromJson(json.decode(response.body));
+  // Déconnexion d'un utilisateur
+  Future<void> logout() async {
+    try {
+      await _storage.delete(key: 'jwt_token');
+      await _storage.delete(key: 'client_id');
+    } catch (e) {
+      throw Exception('Erreur lors de la déconnexion : $e');
     }
-    return null;
+  }
+
+  Future<Commande?> fetchPanier(int clientId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http
+          .get(Uri.parse('$baseUrl/api/commande/panier/$clientId'), headers: headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200 && response.body.isNotEmpty) {
+        return Commande.fromJson(jsonDecode(response.body));
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      }
+      return null;
+    } catch (e) {
+      throw Exception('Erreur : $e');
+    }
   }
 
   Future<void> ajouterProduitAuPanier({
@@ -314,170 +408,251 @@ class ApiService {
     required int produitId,
     required int quantite,
   }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/commande/acheter'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'clientId': clientId,
-        'produitId': produitId,
-        'quantite': quantite,
-      }),
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Erreur lors de l\'ajout au panier');
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/commande/acheter'),
+        headers: headers,
+        body: jsonEncode({
+          'clientId': clientId,
+          'produitId': produitId,
+          'quantite': quantite,
+        }),
+      ).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        return;
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
+        throw Exception('Erreur lors de l\'ajout au panier : ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur : $e');
     }
   }
 
   Future<List<CommandeProduit>> fetchProduitsDuPanier(int commandeId) async {
-    final response = await http.get(Uri.parse('$baseUrl/api/commande-produits/commande/$commandeId'));
-    if (response.statusCode == 200) {
-      return (json.decode(response.body) as List)
-          .map((json) => CommandeProduit.fromJson(json))
-          .toList();
-    } else {
-      throw Exception('Erreur lors du chargement du panier');
+    try {
+      final headers = await _getHeaders();
+      final response = await http
+          .get(Uri.parse('$baseUrl/api/commande-produits/commande/$commandeId'), headers: headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        return (jsonDecode(response.body) as List)
+            .map((json) => CommandeProduit.fromJson(json))
+            .toList();
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
+        throw Exception('Erreur lors du chargement du panier : ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur : $e');
     }
   }
 
   Future<void> confirmerCommande(int commandeId, String adresse) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/commande/confirmer'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'commandeId': commandeId,
-        'adresseLivraison': adresse,
-      }),
-    );
-    if (response.statusCode != 200) {
-      throw Exception('Erreur lors de la confirmation');
+    try {
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/commande/confirmer'),
+        headers: headers,
+        body: jsonEncode({
+          'commandeId': commandeId,
+          'adresseLivraison': adresse,
+        }),
+      ).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        return;
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
+        throw Exception('Erreur lors de la confirmation : ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur : $e');
     }
   }
 
   Future<List<Livraison>> fetchLivraisons(int clientId) async {
-    return []; // À remplacer plus tard par l'appel réel à l'API
+    try {
+      final headers = await _getHeaders();
+      final response = await http
+          .get(Uri.parse('$baseUrl/api/livraisons/client/$clientId'), headers: headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        List<dynamic> jsonList = jsonDecode(response.body);
+        return jsonList.map((json) => Livraison.fromJson(json)).toList();
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
+        throw Exception('Erreur HTTP : ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur : $e');
+    }
   }
 
   Future<void> supprimerProduitDuPanier(int commandeProduitId) async {
-    final response = await http.delete(
-      Uri.parse('$baseUrl/api/commande-produits/$commandeProduitId'),
-    );
-
-    if (response.statusCode != 200 && response.statusCode != 204) {
-      throw Exception('Échec suppression produit');
+    try {
+      final headers = await _getHeaders();
+      final response = await http
+          .delete(Uri.parse('$baseUrl/api/commande-produits/$commandeProduitId'), headers: headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return;
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
+        throw Exception('Échec suppression produit : ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur : $e');
     }
   }
 
   Future<void> augmenterQuantite(int commandeProduitId) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/api/commande-produits/commande-produits/$commandeProduitId/augmenter'),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('Échec augmentation quantité');
+    try {
+      final headers = await _getHeaders();
+      final response = await http.put(
+        Uri.parse('$baseUrl/api/commande-produits/commande-produits/$commandeProduitId/augmenter'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        return;
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
+        throw Exception('Échec augmentation quantité : ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur : $e');
     }
   }
 
   Future<void> diminuerQuantite(int commandeProduitId) async {
-    final response = await http.put(
-      Uri.parse('$baseUrl/api/commande-produits/commande-produits/$commandeProduitId/diminuer'),
-    );
-
-    if (response.statusCode != 200) {
-      throw Exception('Échec diminution quantité');
+    try {
+      final headers = await _getHeaders();
+      final response = await http.put(
+        Uri.parse('$baseUrl/api/commande-produits/commande-produits/$commandeProduitId/diminuer'),
+        headers: headers,
+      ).timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        return;
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
+        throw Exception('Échec diminution quantité : ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur : $e');
     }
   }
 
   Future<String> createPaymentIntent(int amount) async {
-  if (amount <= 0) throw Exception('Montant invalide: $amount');
-  final response = await http.post(
-    Uri.parse('$baseUrl/api/stripe/create-payment-intent?amount=$amount'), // Correction de '/stripe' à '/api/stripe'
-    headers: {'Content-Type': 'application/json'},
-  ).timeout(const Duration(seconds: 10));
-  print("Réponse status: ${response.statusCode}, body: ${response.body}"); // Débogage
-  if (response.statusCode == 200) {
-    final data = json.decode(response.body);
-    return data['clientSecret'] as String;
-  } else {
-    final data = json.decode(response.body);
-    throw Exception('Échec création paiement: ${response.statusCode} - ${data['error'] ?? 'Aucune information'}');
-  }
-}
-Future<List<Commande>> fetchOrders(int clientId) async {
-  try {
-    final response = await http
-        .get(Uri.parse('$baseUrl/api/commande/client/$clientId'))
-        .timeout(const Duration(seconds: 20));
-    print('Réponse fetchOrders: status=${response.statusCode}, body=${response.body}');
-    if (response.statusCode == 200) {
-      if (response.body.isEmpty) {
-        print('Aucune commande trouvée pour clientId: $clientId');
-        return [];
+    try {
+      if (amount <= 0) throw Exception('Montant invalide: $amount');
+      final headers = await _getHeaders();
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/api/stripe/create-payment-intent?amount=$amount'),
+            headers: headers,
+          )
+          .timeout(const Duration(seconds: 10));
+      print("Réponse status: ${response.statusCode}, body: ${response.body}");
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['clientSecret'] as String;
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
+        final data = jsonDecode(response.body);
+        throw Exception('Échec création paiement: ${response.statusCode} - ${data['error'] ?? 'Aucune information'}');
       }
-      List<dynamic> jsonList = jsonDecode(response.body);
-      return jsonList.map((json) => Commande.fromJson(json)).toList();
-    } else {
-      print('Erreur HTTP: status=${response.statusCode}, body=${response.body}');
-      throw Exception('Erreur HTTP : ${response.statusCode}');
+    } catch (e) {
+      throw Exception('Erreur : $e');
     }
-  } catch (e) {
-    print('Erreur fetchOrders: $e');
-    throw Exception('Erreur de connexion à l\'API : $e');
   }
-}
-Future<List<Livraison>> fetchLivraisons1(int clientId) async {
-  try {
-    final response = await http
-        .get(Uri.parse('$baseUrl/api/livraisons/client/$clientId'))
-        .timeout(const Duration(seconds: 5));
-    if (response.statusCode == 200) {
-      List<dynamic> jsonList = jsonDecode(response.body);
-      return jsonList.map((json) => Livraison.fromJson(json)).toList();
-    } else {
-      throw Exception('Erreur HTTP : ${response.statusCode}');
+
+  Future<List<Commande>> fetchOrders(int clientId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http
+          .get(Uri.parse('$baseUrl/api/commande/client/$clientId'), headers: headers)
+          .timeout(const Duration(seconds: 20));
+      print('Réponse fetchOrders: status=${response.statusCode}, body=${response.body}');
+      if (response.statusCode == 200) {
+        if (response.body.isEmpty) {
+          print('Aucune commande trouvée pour clientId: $clientId');
+          return [];
+        }
+        List<dynamic> jsonList = jsonDecode(response.body);
+        return jsonList.map((json) => Commande.fromJson(json)).toList();
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
+        print('Erreur HTTP: status=${response.statusCode}, body=${response.body}');
+        throw Exception('Erreur HTTP : ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Erreur fetchOrders: $e');
+      throw Exception('Erreur de connexion à l\'API : $e');
     }
-  } catch (e) {
-    throw Exception('Erreur : $e');
   }
-}
-Future<void> logout(int clientId) async {
-  try {
-    final response = await http
-        .post(Uri.parse('$baseUrl/api/utilisateurs/logout/$clientId'))
-        .timeout(const Duration(seconds: 5));
-    if (response.statusCode != 200) {
-      throw Exception('Erreur HTTP : ${response.statusCode}');
+
+  Future<List<Livraison>> fetchLivraisons1(int clientId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http
+          .get(Uri.parse('$baseUrl/api/livraisons/client/$clientId'), headers: headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        List<dynamic> jsonList = jsonDecode(response.body);
+        return jsonList.map((json) => Livraison.fromJson(json)).toList();
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
+        throw Exception('Erreur HTTP : ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur : $e');
     }
-  } catch (e) {
-    throw Exception('Erreur : $e');
   }
-}
-Future<List<CommandeProduit>> fetchOrderDetails(int orderId) async {
-  try {
-    final response = await http
-        .get(Uri.parse('$baseUrl/api/commande-produits/commande/$orderId'))
-        .timeout(const Duration(seconds: 5));
-    if (response.statusCode == 200) {
-      List<dynamic> jsonList = jsonDecode(response.body);
-      return jsonList.map((json) => CommandeProduit.fromJson(json)).toList();
-    } else {
-      throw Exception('Erreur HTTP : ${response.statusCode}');
+
+  Future<List<CommandeProduit>> fetchOrderDetails(int orderId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http
+          .get(Uri.parse('$baseUrl/api/commande-produits/commande/$orderId'), headers: headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        List<dynamic> jsonList = jsonDecode(response.body);
+        return jsonList.map((json) => CommandeProduit.fromJson(json)).toList();
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
+        throw Exception('Erreur HTTP : ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur : $e');
     }
-  } catch (e) {
-    throw Exception('Erreur : $e');
   }
-}
-Future<Livraison> fetchDeliveryDetails(int livraisonId) async {
-  try {
-    final response = await http
-        .get(Uri.parse('$baseUrl/api/livraisons/$livraisonId'))
-        .timeout(const Duration(seconds: 5));
-    if (response.statusCode == 200) {
-      return Livraison.fromJson(jsonDecode(response.body));
-    } else {
-      throw Exception('Erreur HTTP : ${response.statusCode}');
+
+  Future<Livraison> fetchDeliveryDetails(int livraisonId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http
+          .get(Uri.parse('$baseUrl/api/livraisons/$livraisonId'), headers: headers)
+          .timeout(const Duration(seconds: 5));
+      if (response.statusCode == 200) {
+        return Livraison.fromJson(jsonDecode(response.body));
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
+        throw Exception('Erreur HTTP : ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur : $e');
     }
-  } catch (e) {
-    throw Exception('Erreur : $e');
   }
-}
 }

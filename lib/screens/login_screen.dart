@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:gestion_produit_flutter/screens/SupplierProductListScreen.dart';
+import 'package:gestion_produit_flutter/screens/product_list_screen.dart';
+import 'package:gestion_produit_flutter/screens/supplier_my_product_list_screen.dart';
 import 'package:gestion_produit_flutter/services/api_service.dart';
 import 'package:gestion_produit_flutter/screens/register_screen.dart';
-import 'package:gestion_produit_flutter/screens/product_list_screen.dart';
 import '../constants.dart';
 import '../app_properties.dart';
+import '../models/utilisateur.dart' as user;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -18,8 +22,72 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoading = false;
+  final _storage = const FlutterSecureStorage();
+  bool _isLoading = true;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    try {
+      // Vérifier si un token existe dans le stockage sécurisé
+      final token = await _storage.read(key: 'jwt_token');
+      print('Token trouvé au démarrage : $token');
+      if (token != null) {
+        // Appeler l'API pour vérifier la validité du token et récupérer l'utilisateur
+        final utilisateur = await ApiService().fetchCurrentUser();
+        print('Utilisateur récupéré : ${utilisateur.typeUtilisateur}, ID: ${utilisateur.id}');
+        // Stocker l'ID de l'utilisateur pour tous les types (CLIENT et FOURNISSEUR)
+        await _storage.write(key: 'client_id', value: utilisateur.id.toString());
+        if (utilisateur.typeUtilisateur == 'CLIENT') {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const ProductListScreen()),
+            );
+          }
+        } else if (utilisateur.typeUtilisateur == 'FOURNISSEUR') {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const SupplierProductListScreen()),
+            );
+          }
+        } else {
+          setState(() {
+            _errorMessage = 'Type d\'utilisateur inconnu';
+            _isLoading = false;
+          });
+        }
+      } else {
+        // Aucun token, afficher l'écran de connexion
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Erreur dans _checkAuth : $e');
+      // Supprimer les tokens uniquement si l'erreur est 401 (token invalide)
+      if (e.toString().contains('Non autorisé') || e.toString().contains('401')) {
+        await _storage.delete(key: 'jwt_token');
+        await _storage.delete(key: 'client_id');
+        setState(() {
+          _errorMessage = 'Session expirée, veuillez vous reconnecter';
+          _isLoading = false;
+        });
+      } else {
+        // Ne pas supprimer les tokens pour les erreurs temporaires (ex. serveur non disponible)
+        setState(() {
+          _errorMessage = 'Erreur de connexion au serveur, veuillez réessayer';
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) {
@@ -32,28 +100,50 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final utilisateur = await ApiService().login(
+      final token = await ApiService().login(
         _emailController.text.trim(),
         _passwordController.text,
       );
-      if (utilisateur != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProductListScreen(clientId: utilisateur.id),
-          ),
-        );
+      print('Token après connexion : $token');
+      if (token != null) {
+        final utilisateur = await ApiService().fetchCurrentUser();
+        print('Utilisateur après connexion : ${utilisateur.typeUtilisateur}, ID: ${utilisateur.id}');
+        // Stocker l'ID de l'utilisateur pour tous les types (CLIENT et FOURNISSEUR)
+        await _storage.write(key: 'client_id', value: utilisateur.id.toString());
+        if (utilisateur.typeUtilisateur == 'CLIENT') {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const ProductListScreen(),
+              ),
+            );
+          }
+        } else if (utilisateur.typeUtilisateur == 'FOURNISSEUR') {
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SupplierProductListScreen(),
+              ),
+            );
+          }
+        } else {
+          setState(() {
+            _errorMessage = 'Type d\'utilisateur inconnu';
+            _isLoading = false;
+          });
+        }
       } else {
         setState(() {
-          _errorMessage = 'Erreur : utilisateur non trouvé';
+          _errorMessage = 'Erreur : token non reçu';
+          _isLoading = false;
         });
       }
     } catch (e) {
+      print('Erreur dans _login : $e');
       setState(() {
         _errorMessage = e.toString().replaceFirst('Exception: ', '');
-      });
-    } finally {
-      setState(() {
         _isLoading = false;
       });
     }
@@ -68,6 +158,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     Widget title = const Text(
       'Connexion',
       style: TextStyle(
@@ -136,8 +232,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
           ),
         ),
-      ).animate().fadeIn(duration: 600.ms, delay: 400.ms),
-    );
+      ),
+    ).animate().fadeIn(duration: 600.ms, delay: 400.ms);
 
     Widget loginForm = Container(
       height: 240,

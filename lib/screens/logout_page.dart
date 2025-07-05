@@ -5,9 +5,7 @@ import '../screens/login_screen.dart';
 import '../app_properties.dart';
 
 class LogoutPage extends StatelessWidget {
-  final int clientId;
-
-  const LogoutPage({super.key, required this.clientId});
+  const LogoutPage({super.key, required int clientId});
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +62,7 @@ class LogoutPage extends StatelessWidget {
                   trailing: Icon(Icons.logout, color: yellow),
                   onTap: () async {
                     try {
-                      await ApiService().logout(clientId);
+                      await ApiService().logout();
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(builder: (_) => const LoginScreen()),

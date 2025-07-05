@@ -6,15 +6,16 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/commande.dart';
 import '../models/commande_produit.dart';
 import '../services/api_service.dart';
 import '../constants.dart';
 import 'receipt_page.dart';
+import 'login_screen.dart';
 
 class PanierScreen extends StatefulWidget {
-  final int clientId;
-  const PanierScreen({super.key, required this.clientId});
+  const PanierScreen({super.key});
 
   @override
   State<PanierScreen> createState() => _PanierScreenState();
@@ -28,6 +29,8 @@ class _PanierScreenState extends State<PanierScreen> {
   final _adresseController = TextEditingController();
   LatLng _selectedLocation = LatLng(36.8065, 10.1815); // Tunis par défaut
   String _paymentMethod = 'Stripe'; // Default payment method
+  bool _isPaymentCompleted = false; // Track payment status
+  final _storage = const FlutterSecureStorage();
 
   @override
   void initState() {
@@ -36,9 +39,18 @@ class _PanierScreenState extends State<PanierScreen> {
     _loadPanier();
   }
 
+  Future<int> _getClientId() async {
+    final clientIdString = await _storage.read(key: 'client_id');
+    if (clientIdString == null) {
+      throw Exception('Client ID non trouvé. Veuillez vous reconnecter.');
+    }
+    return int.parse(clientIdString);
+  }
+
   Future<void> _loadPanier() async {
     try {
-      _commande = await ApiService().fetchPanier(widget.clientId);
+      final clientId = await _getClientId();
+      _commande = await ApiService().fetchPanier(clientId);
       if (_commande != null) {
         _produits = await ApiService().fetchProduitsDuPanier(_commande!.id!);
       }
@@ -51,6 +63,13 @@ class _PanierScreenState extends State<PanierScreen> {
           backgroundColor: Colors.redAccent,
         ),
       );
+      if (e.toString().contains('Client ID non trouvé')) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+      }
     }
   }
 
@@ -81,8 +100,59 @@ class _PanierScreenState extends State<PanierScreen> {
     }
   }
 
+  Future<void> _payer() async {
+    if (_paymentMethod == 'Stripe') {
+      try {
+        final montant = (_total * 100).toInt();
+        final clientSecret = await ApiService().createPaymentIntent(montant);
+        await Stripe.instance.initPaymentSheet(
+          paymentSheetParameters: SetupPaymentSheetParameters(
+            paymentIntentClientSecret: clientSecret,
+            merchantDisplayName: 'Gestion Produit',
+            style: ThemeMode.light,
+          ),
+        );
+        await Stripe.instance.presentPaymentSheet();
+        setState(() {
+          _isPaymentCompleted = true;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Paiement réussi"),
+            backgroundColor: Color.fromRGBO(236, 60, 3, 1),
+          ),
+        );
+      } catch (e) {
+        _showError("Erreur paiement : $e");
+      }
+    } else {
+      setState(() {
+        _isPaymentCompleted = true; // For cash on delivery, assume payment is "completed"
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Paiement à la livraison sélectionné"),
+          backgroundColor: Color.fromRGBO(236, 60, 3, 1),
+        ),
+      );
+    }
+  }
+
   Future<void> _confirmerCommande() async {
-    if (_commande != null && _adresseController.text.isNotEmpty) {
+    if (_commande == null || _produits.isEmpty) {
+      _showError("Panier vide ou non chargé");
+      return;
+    }
+    if (_adresseController.text.isEmpty) {
+      _showError("Veuillez entrer une adresse de livraison");
+      return;
+    }
+    if (_paymentMethod == 'Stripe' && !_isPaymentCompleted) {
+      _showError("Veuillez effectuer le paiement avant de confirmer");
+      return;
+    }
+
+    try {
       await ApiService().confirmerCommande(_commande!.id!, _adresseController.text);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -102,40 +172,8 @@ class _PanierScreenState extends State<PanierScreen> {
           ),
         ),
       );
-    } else {
-      _showError("Veuillez entrer une adresse de livraison");
-    }
-  }
-
-  Future<void> _payer() async {
-    if (_paymentMethod == 'Stripe') {
-      try {
-        final montant = (_total * 100).toInt();
-        final clientSecret = await ApiService().createPaymentIntent(montant);
-        await Stripe.instance.initPaymentSheet(
-          paymentSheetParameters: SetupPaymentSheetParameters(
-            paymentIntentClientSecret: clientSecret,
-            merchantDisplayName: 'Gestion Produit',
-            style: ThemeMode.light,
-          ),
-        );
-        await Stripe.instance.presentPaymentSheet();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Paiement réussi"),
-            backgroundColor: Color.fromRGBO(236, 60, 3, 1),
-          ),
-        );
-      } catch (e) {
-        _showError("Erreur paiement : $e");
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Paiement à la livraison sélectionné"),
-          backgroundColor: Color.fromRGBO(236, 60, 3, 1),
-        ),
-      );
+    } catch (e) {
+      _showError("Erreur confirmation commande : $e");
     }
   }
 
@@ -361,6 +399,7 @@ class _PanierScreenState extends State<PanierScreen> {
           if (newValue != null) {
             setState(() {
               _paymentMethod = newValue;
+              _isPaymentCompleted = false; // Reset payment status on method change
             });
           }
         },

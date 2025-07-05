@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:gestion_produit_flutter/services/api_service.dart';
 import 'package:gestion_produit_flutter/models/utilisateur.dart' as user;
 import 'package:gestion_produit_flutter/screens/login_screen.dart';
-import 'package:gestion_produit_flutter/screens/supplier_product_list_screen.dart';
+import 'package:gestion_produit_flutter/screens/supplier_my_product_list_screen.dart';
 import 'package:intl/intl.dart';
 
 class SupplierProfileScreen extends StatefulWidget {

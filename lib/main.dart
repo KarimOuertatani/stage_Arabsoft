@@ -4,8 +4,8 @@ import 'package:gestion_produit_flutter/screens/SupplierProductListScreen.dart';
 import 'package:gestion_produit_flutter/screens/login_screen.dart';
 import 'package:gestion_produit_flutter/screens/register_screen.dart';
 import 'package:gestion_produit_flutter/screens/product_list_screen.dart';
-import 'package:gestion_produit_flutter/screens/supplier_product_list_screen.dart';
-import 'package:gestion_produit_flutter/screens/supplier_profile_screen.dart' hide SupplierProfileScreen;
+import 'package:gestion_produit_flutter/screens/supplier_my_product_list_screen.dart';
+import 'package:gestion_produit_flutter/screens/supplier_profile_screen.dart';
 import 'package:gestion_produit_flutter/screens/settings_screen.dart';
 import 'package:gestion_produit_flutter/screens/admin_home_screen.dart';
 import 'package:gestion_produit_flutter/screens/admin_product_list_screen.dart';
@@ -22,7 +22,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Initialiser Stripe directement avec la clé publique
-  Stripe.publishableKey = 'pk_test_51OHotbIUNFbNVA8jlkNNnNWUGVqaOyjbHcH0s17ZXUROh8NTz8Em3Jo664QWxIRPBjVoH5s88kUAt3QROCnzbxRR00zuiPCnup'; // Remplacez par votre clé publique Stripe
+  //Stripe.publishableKey = 'pk_test_51OHotbIUNFbNVA8jlkNNnNWUGVqaOyjbHcH0s17ZXUROh8NTz8Em3Jo664QWxIRPBjVoH5s88kUAt3QROCnzbxRR00zuiPCnup'; // Remplacez par votre clé publique Stripe
   
   runApp(const MyApp());
 }
@@ -47,14 +47,8 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (context) => const LoginScreen(),
         '/register': (context) => const RegisterScreen(),
-        '/client-products': (context) {
-          final clientId = ModalRoute.of(context)!.settings.arguments as int;
-          return ProductListScreen(clientId: clientId);
-        },
-        '/panier': (context) {
-          final clientId = ModalRoute.of(context)!.settings.arguments as int;
-          return PanierScreen(clientId: clientId);
-        },
+        '/client-products': (context) => const ProductListScreen(),
+        '/panier': (context) => const PanierScreen(),
         '/client-profile': (context) {
           final clientId = ModalRoute.of(context)!.settings.arguments as int;
           return ProfilePage(clientId: clientId);
@@ -71,10 +65,7 @@ class MyApp extends StatelessWidget {
           final clientId = ModalRoute.of(context)!.settings.arguments as int;
           return LogoutPage(clientId: clientId);
         },
-        '/products': (context) {
-          final fournisseurId = ModalRoute.of(context)!.settings.arguments as int;
-          return SupplierProductListScreen(fournisseurId: fournisseurId);
-        },
+        '/products': (context) => const SupplierProductListScreen(),
         '/profile': (context) {
           final fournisseurId = ModalRoute.of(context)!.settings.arguments as int;
           return SupplierProfileScreen(fournisseurId: fournisseurId);
@@ -102,6 +93,10 @@ class MyApp extends StatelessWidget {
         '/admin-profile': (context) {
           final adminId = ModalRoute.of(context)!.settings.arguments as int;
           return AdminProfileScreen(adminId: adminId);
+        },
+        '/supplier-my-products': (context) { // Route ajoutée
+          final fournisseurId = ModalRoute.of(context)!.settings.arguments as int;
+          return SupplierMyProductListScreen(fournisseurId: fournisseurId);
         },
       },
     );

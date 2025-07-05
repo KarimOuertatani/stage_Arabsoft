@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gestion_produit_flutter/screens/login_screen.dart';
-import 'package:gestion_produit_flutter/screens/supplier_product_list_screen.dart';
+import 'package:gestion_produit_flutter/screens/supplier_my_product_list_screen.dart';
 import 'package:gestion_produit_flutter/screens/supplier_profile_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
