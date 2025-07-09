@@ -14,16 +14,16 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
-  it(`should have the 'interfaceADMIN' title`, () => {
+  it(`should have the 'projet0' title`, () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;
-    expect(app.title).toEqual('interfaceADMIN');
+    expect(app.title).toEqual('projet0');
   });
 
   it('should render title', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, interfaceADMIN');
+    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, projet0');
   });
 });

@@ -1,0 +1,77 @@
+<div class="dashboard-wrapper">
+  <mat-sidenav-container class="sidenav-container">
+    <!-- Sidebar -->
+    <mat-sidenav
+      #sidenav
+      mode="side"
+      opened
+      class="sidenav"
+      [fixedInViewport]="true"
+      [fixedTopGap]="0"
+    >
+      <div class="sidenav-header">
+        <h2>Dashboard</h2>
+        <button mat-icon-button class="toggle-button" (click)="sidenav.toggle()" aria-label="Toggle sidebar">
+          <mat-icon>menu</mat-icon>
+        </button>
+      </div>
+      <mat-nav-list>
+        <a mat-list-item routerLink="/dashboard" routerLinkActive="active">
+          <mat-icon matListIcon>dashboard</mat-icon>
+          Dashboard
+        </a>
+      </mat-nav-list>
+    </mat-sidenav>
+
+    <!-- Main Content -->
+    <mat-sidenav-content>
+      <div class="dashboard-container">
+        <!-- Alert Banner -->
+        @if (isShowAlert) {
+          <mat-card class="alert-banner" appearance="outlined">
+            <mat-card-content>
+              🎉 Welcome to the Dashboard - Monitor your key metrics in real-time!
+              <a href="https://github.com/acrodata/gui" target="_blank" class="learn-more">Learn more!</a>
+            </mat-card-content>
+            <mat-card-actions>
+              <button mat-icon-button (click)="onAlertDismiss()" aria-label="Dismiss alert">
+                <mat-icon>close</mat-icon>
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        }
+
+        <!-- Stats Grid -->
+        <mat-grid-list cols="4" rowHeight="180px" gutterSize="24px" class="stats-grid">
+          @for (stat of stats; track stat) {
+            <mat-grid-tile>
+              <mat-card class="stat-card" appearance="outlined">
+                <mat-card-header>
+                  <mat-card-title class="stat-title">{{ stat.title }}</mat-card-title>
+                </mat-card-header>
+                <mat-card-content class="stat-content">
+                  <span class="stat-amount">{{ stat.amount }}</span>
+                </mat-card-content>
+              </mat-card>
+            </mat-grid-tile>
+          }
+        </mat-grid-list>
+
+        <!-- Chart Section -->
+        <mat-card class="chart-card" appearance="outlined">
+          <mat-card-header>
+            <mat-card-title>Order Trends</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <canvas baseChart
+              [data]="lineChartData"
+              [options]="lineChartOptions"
+              [type]="'line'"
+              class="chart-canvas">
+            </canvas>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>
