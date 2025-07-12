@@ -11,6 +11,6 @@ bootstrapApplication(AppComponent, {
   providers: [
     provideRouter(routes),
     provideHttpClient(),
-    importProvidersFrom(ReactiveFormsModule), provideAnimationsAsync(), provideAnimationsAsync(), provideAnimationsAsync()
+    importProvidersFrom(ReactiveFormsModule), provideAnimationsAsync(), provideAnimationsAsync(), provideAnimationsAsync(), provideAnimationsAsync()
   ]
 }).catch(err => console.error(err));

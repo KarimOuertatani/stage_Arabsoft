@@ -1,0 +1,150 @@
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav #sidenav mode="side" [opened]="!isSidenavCollapsed" class="sidenav" [ngClass]="{ 'collapsed': isSidenavCollapsed }">
+    <div class="sidenav-header">
+      <div class="logo-container">
+        <mat-icon class="logo-icon">inventory</mat-icon>
+        @if (!isSidenavCollapsed) {
+          <h2>ADMIN</h2>
+        }
+      </div>
+      <button mat-icon-button class="toggle-button" (click)="toggleSidenav()" [matTooltip]="isSidenavCollapsed ? 'Expand Menu' : 'Collapse Menu'">
+        <mat-icon>{{ isSidenavCollapsed ? 'menu' : 'menu_open' }}</mat-icon>
+      </button>
+    </div>
+    <mat-divider></mat-divider>
+    <mat-nav-list>
+      <a mat-list-item routerLink="/dashboard" routerLinkActive="active">
+        <mat-icon>dashboard</mat-icon>
+        @if (!isSidenavCollapsed) { <span>Dashboard</span> }
+      </a>
+      <a mat-list-item routerLink="/users" routerLinkActive="active">
+        <mat-icon>people</mat-icon>
+        @if (!isSidenavCollapsed) { <span>Users</span> }
+      </a>
+      <a mat-list-item routerLink="/orders" routerLinkActive="active">
+        <mat-icon>shopping_cart</mat-icon>
+        @if (!isSidenavCollapsed) { <span>Orders</span> }
+      </a>
+      <a mat-list-item routerLink="/categories" routerLinkActive="active">
+        <mat-icon>category</mat-icon>
+        @if (!isSidenavCollapsed) { <span>Categories</span> }
+      </a>
+      <a mat-list-item routerLink="/products" routerLinkActive="active">
+        <mat-icon>inventory_2</mat-icon>
+        @if (!isSidenavCollapsed) { <span>Products</span> }
+      </a>
+      <a mat-list-item routerLink="/deliveries" routerLinkActive="active">
+        <mat-icon>local_shipping</mat-icon>
+        @if (!isSidenavCollapsed) { <span>Deliveries</span> }
+      </a>
+    </mat-nav-list>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <div class="users-wrapper">
+      <div class="users-header">
+        <h1>Users Management</h1>
+        <div class="user-info">
+          <span class="user-name">{{ currentUser?.nom || 'User' }}</span>
+          <button mat-icon-button class="theme-toggle" (click)="toggleTheme()" [matTooltip]="isDarkTheme ? 'Switch to Light Theme' : 'Switch to Dark Theme'">
+            <mat-icon>{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</mat-icon>
+          </button>
+          <button mat-icon-button class="logout-button" (click)="logout()" matTooltip="Logout">
+            <mat-icon>logout</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <div class="users-container">
+        @if (isLoading) {
+          <div class="loading-spinner">
+            <mat-spinner diameter="48"></mat-spinner>
+            <p>Loading users...</p>
+          </div>
+        } @else if (errorMessage) {
+          <div class="error-banner">
+            <mat-icon>error</mat-icon>
+            <span>{{ errorMessage }}</span>
+            <button mat-flat-button color="primary" (click)="retry()">Retry</button>
+          </div>
+        } @else {
+          @if (isShowAlert) {
+            <div class="alert-banner">
+              <mat-icon>star</mat-icon>
+              <span>🌟 Manage your users efficiently with Smart Inventory!</span>
+              <a class="learn-more" href="#" (click)="onAlertDismiss()">Dismiss</a>
+            </div>
+          }
+
+          <mat-card class="section-card">
+            <h3>User List</h3>
+            <div style="margin-bottom: 16px;">
+              <mat-form-field appearance="outline">
+                <mat-label>Filter by Role</mat-label>
+                <mat-select [(value)]="selectedRole" (selectionChange)="filterUsers()">
+                  <mat-option value="">All Roles</mat-option>
+                  <mat-option value="ADMIN">Admin</mat-option>
+                  <mat-option value="CLIENT">Client</mat-option>
+                  <mat-option value="FOURNISSEUR">Fournisseur</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <table mat-table [dataSource]="filteredUtilisateurs" class="mat-table">
+              <ng-container matColumnDef="id">
+                <th mat-header-cell *matHeaderCellDef>ID</th>
+                <td mat-cell *matCellDef="let user">{{ user.id }}</td>
+              </ng-container>
+              <ng-container matColumnDef="nom">
+                <th mat-header-cell *matHeaderCellDef>Name</th>
+                <td mat-cell *matCellDef="let user">{{ user.nom }} {{ user.prenom }}</td>
+              </ng-container>
+              <ng-container matColumnDef="email">
+                <th mat-header-cell *matHeaderCellDef>Email</th>
+                <td mat-cell *matCellDef="let user">{{ user.email }}</td>
+              </ng-container>
+              <ng-container matColumnDef="numeroTelephone">
+                <th mat-header-cell *matHeaderCellDef>Phone</th>
+                <td mat-cell *matCellDef="let user">{{ user.numeroTelephone || 'N/A' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="dateNaissance">
+                <th mat-header-cell *matHeaderCellDef>Birth Date</th>
+                <td mat-cell *matCellDef="let user">{{ user.dateNaissance | date:'shortDate' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="type">
+                <th mat-header-cell *matHeaderCellDef>Type</th>
+                <td mat-cell *matCellDef="let user">{{ user.typeUtilisateur }}</td>
+              </ng-container>
+              <ng-container matColumnDef="actions">
+                <th mat-header-cell *matHeaderCellDef>Actions</th>
+                <td mat-cell *matCellDef="let user">
+                  <button mat-mini-fab color="primary" (click)="updateUser(user.id)" matTooltip="Edit User">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-mini-fab color="warn" (click)="openDeleteDialog(user.id, user.nom + ' ' + user.prenom)" matTooltip="Delete User">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="userColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: userColumns;" [ngClass]="{'alternate-row': row.id % 2 === 0}"></tr>
+            </table>
+          </mat-card>
+
+          @if (filteredUtilisateurs.length > 0) {
+            <mat-card class="chart-card">
+              <mat-card-title>User Type Distribution</mat-card-title>
+              <mat-card-content>
+                <canvas baseChart
+                        [data]="userChartData"
+                        [options]="chartOptions"
+                        [type]="'pie'"
+                        class="chart-canvas">
+                </canvas>
+              </mat-card-content>
+            </mat-card>
+          }
+        }
+      </div>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

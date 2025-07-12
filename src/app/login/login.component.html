@@ -1,46 +1,42 @@
-<div class="auth container">
+<div class="container">
   <mat-card class="auth__card">
     <div class="auth__header">
-      <h2>👋 Connexion</h2>
+      <mat-icon class="logo-icon">inventory</mat-icon>
+      <h2>ADMIN</h2>
     </div>
     <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="auth__body">
-      <mat-form-field class="w-100">
+      <mat-form-field appearance="outline">
         <mat-label>Email</mat-label>
-        <input matInput formControlName="email" placeholder="email@example.com">
+        <input matInput formControlName="email" type="email" placeholder="Enter your email" required>
         @if (loginForm.get('email')?.invalid && (loginForm.get('email')?.dirty || loginForm.get('email')?.touched)) {
           <mat-error>
             @if (loginForm.get('email')?.errors?.['required']) {
-              Veuillez entrer l'email.
+              Please enter your email.
             }
             @if (loginForm.get('email')?.errors?.['email']) {
-              Format d'email invalide.
+              Invalid email format.
             }
           </mat-error>
         }
       </mat-form-field>
-
-      <mat-form-field class="w-100">
-        <mat-label>Mot de passe</mat-label>
-        <input matInput type="password" formControlName="password" placeholder="********">
+      <mat-form-field appearance="outline">
+        <mat-label>Password</mat-label>
+        <input matInput formControlName="password" type="password" placeholder="Enter your password" required>
         @if (loginForm.get('password')?.invalid && (loginForm.get('password')?.dirty || loginForm.get('password')?.touched)) {
           <mat-error>
             @if (loginForm.get('password')?.errors?.['required']) {
-              Veuillez entrer le mot de passe.
+              Please enter your password.
             }
           </mat-error>
         }
       </mat-form-field>
-
-      <button mat-raised-button color="primary" type="submit" [disabled]="isLoading || loginForm.invalid" class="w-100">
-        {{ isLoading ? 'Connexion en cours...' : 'Se connecter' }}
+      
+      <button mat-raised-button color="primary" type="submit" [disabled]="loginForm.invalid || isLoading" class="auth__submit">
+        <mat-icon *ngIf="isLoading" class="loading-icon">hourglass_empty</mat-icon>
+        {{ isLoading ? 'Logging in...' : 'Login' }}
       </button>
-
-      @if (errorMessage) {
-        <div class="error">{{ errorMessage }}</div>
-      }
-
       <div class="auth__footer">
-        <p>Pas encore de compte ? <a routerLink="/register">Créer un compte</a></p>
+        <a routerLink="/signup">Don't have an account? Sign up</a>
       </div>
     </form>
   </mat-card>
