@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild, HostListener, Inject } from '@angular/core';
+import { Component, OnInit, ViewChild, HostListener, Inject, ChangeDetectorRef } from '@angular/core';
 import { MatTableModule } from '@angular/material/table';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -10,6 +10,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialogModule, MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { NgChartsModule } from 'ng2-charts';
 import { ChartConfiguration, ChartData } from 'chart.js';
 import { ApiService } from '../services/api.service';
@@ -19,7 +20,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { MtxAlertModule } from '@ng-matero/extensions/alert';
-import { MatSelectModule } from '@angular/material/select';
+import * as L from 'leaflet';
+import { HttpClient } from '@angular/common/http';
+import { SidebarComponent } from "../sidebar/sidebar.component";
 
 @Component({
   selector: 'app-deliveries',
@@ -40,11 +43,13 @@ import { MatSelectModule } from '@angular/material/select';
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     NgChartsModule,
     RouterLink,
     RouterLinkActive,
-    MtxAlertModule
-  ]
+    MtxAlertModule,
+    SidebarComponent
+]
 })
 export class DeliveriesComponent implements OnInit {
   @ViewChild('sidenav') sidenav!: MatSidenav;
@@ -128,7 +133,7 @@ export class DeliveriesComponent implements OnInit {
 
     this.apiService.getLivraisons().subscribe({
       next: (livraisons) => {
-        this.livraisons = livraisons;
+        this.livraisons = livraisons.filter(l => l.id !== undefined); // Ensure no undefined IDs
         this.updateChartData();
         this.isLoading = false;
       },
@@ -152,26 +157,30 @@ export class DeliveriesComponent implements OnInit {
   }
 
   openEditDialog(livraison: Livraison) {
-    /*const dialogRef = this.dialog.open(DeliveryDialogComponent, {
+    if (livraison.id === undefined) {
+      this.errorMessage = 'Cannot edit delivery: ID is undefined';
+      return;
+    }
+    const dialogRef = this.dialog.open(DeliveryDialogComponent, {
       width: '400px',
       data: { ...livraison }
     });
 
-   dialogRef.afterClosed().subscribe(result => {
-      if (result && result.adresseLivraison && result.statut) {
+    dialogRef.afterClosed().subscribe(result => {
+      if (result && result.adresseLivraison && result.statut && livraison.id !== undefined) {
         this.isLoading = true;
-        this.apiService.updateLivraison(id, result).subscribe({
+        this.apiService.updateLivraison(livraison.id, result).subscribe({
           next: () => {
             this.loadDeliveries();
           },
           error: (err: any) => {
             console.error('Erreur lors de la mise à jour de la livraison:', err);
-            this.errorMessage = 'Failed to update delivery. Please try again.';
+            this.errorMessage = 'Failed to update updatedelivery. Please try again.';
             this.isLoading = false;
           }
         });
       }
-    });*/
+    });
   }
 
   openDeleteDialog(id: number, adresse: string) {
@@ -183,6 +192,37 @@ export class DeliveriesComponent implements OnInit {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.deleteDelivery(id);
+      }
+    });
+  }
+
+  openMapDialog(adresse: string) {
+    this.dialog.open(MapDialogComponent, {
+      width: '600px',
+      height: '500px',
+      data: { adresse }
+    });
+  }
+
+  dispatchDelivery(id: number) {
+    this.isLoading = true;
+    this.errorMessage = null;
+
+    this.apiService.updateLivraisonStatus(id, 'EN_COURS').subscribe({
+      next: (updatedLivraison) => {
+        console.log('Delivery dispatched successfully:', updatedLivraison);
+        this.loadDeliveries();
+      },
+      error: (err) => {
+        console.error('Error dispatching delivery:', err);
+        let errorMsg = 'Failed to dispatch delivery. Please try again.';
+        if (err.status === 404) {
+          errorMsg = 'Delivery not found. It may have been deleted.';
+        } else if (err.status === 400) {
+          errorMsg = 'Invalid status update. Please check the delivery status.';
+        }
+        this.errorMessage = errorMsg;
+        this.isLoading = false;
       }
     });
   }
@@ -293,4 +333,112 @@ export class ConfirmDialogComponent {
     public dialogRef: MatDialogRef<ConfirmDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: { message: string }
   ) {}
+}
+
+@Component({
+  selector: 'app-map-dialog',
+  template: `
+    <h1 mat-dialog-title>Delivery Location</h1>
+    <div mat-dialog-content>
+      <div id="map" style="height: 400px; width: 100%;"></div>
+    </div>
+    <div mat-dialog-actions align="end">
+      <button mat-button (click)="dialogRef.close()">Close</button>
+    </div>
+  `,
+  styles: [
+    `
+      #map {
+        height: 400px;
+        width: 100%;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+    `
+  ],
+  standalone: true,
+  imports: [MatDialogModule, MatButtonModule]
+})
+export class MapDialogComponent implements OnInit {
+  private map: L.Map | undefined;
+
+  constructor(
+    public dialogRef: MatDialogRef<MapDialogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: { adresse: string },
+    private http: HttpClient,
+    private cdr: ChangeDetectorRef
+  ) {}
+
+  ngOnInit() {
+    setTimeout(() => this.initializeMap(), 0); // Ensure map initializes after DOM render
+  }
+
+  private initializeMap() {
+    // Initialize map
+    this.map = L.map('map', {
+      center: [0, 0],
+      zoom: 2,
+      zoomControl: true,
+      attributionControl: true
+    });
+
+    // Add OpenStreetMap tile layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(this.map);
+
+    // Invalidate size to fix rendering issues
+    setTimeout(() => {
+      if (this.map) {
+        this.map.invalidateSize();
+      }
+    }, 100);
+
+    // Geocode the address
+    this.http
+      .get<any>(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(this.data.adresse)}`, {
+        headers: { 'User-Agent': 'SmartInventory/1.0' } // Required by Nominatim policy
+      })
+      .subscribe({
+        next: (response: string | any[]) => {
+          if (response && response.length > 0) {
+            const { lat, lon, display_name } = response[0];
+            if (this.map) {
+              this.map.setView([lat, lon], 15);
+              L.marker([lat, lon])
+                .addTo(this.map)
+                .bindPopup(`<b>Delivery Location</b><br>${display_name}`)
+                .openPopup();
+            }
+          } else {
+            if (this.map) {
+              this.map.setView([0, 0], 2);
+              L.popup()
+                .setLatLng([0, 0])
+                .setContent('Address not found')
+                .openOn(this.map);
+            }
+          }
+          this.cdr.detectChanges();
+        },
+        error: (err: any) => {
+          console.error('Error geocoding address:', err);
+          if (this.map) {
+            this.map.setView([0, 0], 2);
+            L.popup()
+              .setLatLng([0, 0])
+              .setContent('Error loading map')
+              .openOn(this.map);
+          }
+          this.cdr.detectChanges();
+        }
+      });
+  }
+
+  ngOnDestroy() {
+    if (this.map) {
+      this.map.remove();
+    }
+  }
 }

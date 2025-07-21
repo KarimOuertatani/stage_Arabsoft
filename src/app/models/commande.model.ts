@@ -17,3 +17,12 @@ export interface CommandeProduit {
   prixUnitaire: number;
   produit: Produit;
 }
+export interface CommandeDTO {
+  id?: number;
+  dateCommande?: string;
+  clientId: number;
+  statut: 'EN_ATTENTE' | 'CONFIRMEE';
+  total: number;
+  produits?: CommandeProduit[];
+  livraison?: Livraison;
+}

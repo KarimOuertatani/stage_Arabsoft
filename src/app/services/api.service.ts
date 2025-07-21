@@ -11,7 +11,7 @@ import { Categorie } from '../models/categorie.model';
   providedIn: 'root'
 })
 export class ApiService {
-  private apiUrl = 'http://192.168.1.11:8081/api';
+  private apiUrl = 'http://192.168.1.12:8081/api';
 
   constructor(private http: HttpClient) {}
 
@@ -81,5 +81,11 @@ export class ApiService {
 
   deleteLivraison(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/livraisons/${id}`, { headers: this.getHeaders() });
+  }
+  updateLivraisonStatus(id: number, statut: string): Observable<Livraison> {
+    return this.http.put<Livraison>(`${this.apiUrl}/livraisons/${id}/statut`, { statut }, { headers: this.getHeaders() });
+  }
+  getProduitImage(id: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/produits/${id}/image`, { headers: this.getHeaders(), responseType: 'blob' });
   }
 }

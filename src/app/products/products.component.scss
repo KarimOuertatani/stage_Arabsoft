@@ -211,9 +211,32 @@ mat-divider {
   margin: 0 0 16px;
 }
 
+.search-field {
+  width: 100%;
+  max-width: 400px;
+  margin-bottom: 16px;
+}
+
+.product-image {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-image:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
 .mat-table {
   width: 100%;
   border-collapse: collapse;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 th.mat-header-cell, td.mat-cell {
@@ -235,6 +258,7 @@ td.mat-cell {
 
 tr.mat-row:hover {
   background-color: rgba(37, 99, 235, 0.1);
+  transition: background-color 0.3s ease;
 }
 
 tr.alternate-row {
@@ -244,6 +268,7 @@ tr.alternate-row {
 td.mat-cell button[mat-mini-fab] {
   box-shadow: none;
   transition: background-color 0.3s ease, transform 0.2s ease;
+  margin-right: 8px;
 }
 
 td.mat-cell button[mat-mini-fab]:hover {
@@ -286,6 +311,11 @@ td.mat-cell button[mat-mini-fab]:hover {
 .loading-spinner p {
   font-size: 1.1em;
   color: #374151;
+}
+
+.image-dialog {
+  max-width: 90vw;
+  max-height: 90vh;
 }
 
 @media (width <= 599px) {
@@ -339,6 +369,15 @@ td.mat-cell button[mat-mini-fab]:hover {
   th.mat-header-cell, td.mat-cell {
     padding: 12px;
     font-size: 0.9em;
+  }
+
+  .product-image {
+    width: 40px;
+    height: 40px;
+  }
+
+  .search-field {
+    max-width: 100%;
   }
 }
 
@@ -415,6 +454,18 @@ td.mat-cell button[mat-mini-fab]:hover {
 
   .loading-spinner p {
     color: #d1d5db;
+  }
+
+  .product-image {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .product-image:hover {
+    box-shadow: 0 4px 8px rgba(255, 255, 255, 0.2);
+  }
+
+  .search-field .mat-form-field-wrapper {
+    background-color: rgba(255, 255, 255, 0.1);
   }
 }
 

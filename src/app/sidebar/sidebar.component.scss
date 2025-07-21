@@ -1,0 +1,277 @@
+@use '@angular/material' as mat;
+
+$swift-ease-out-duration: 0.3s;
+$swift-ease-out-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+
+// Color palette
+$primary-blue: #1e3a8a;
+$secondary-blue: #2563eb;
+$background-white: #f9fafb;
+$hover-blue: rgba(37, 99, 235, 0.1);
+$active-blue: rgba(37, 99, 235, 0.15);
+$text-dark: #111827;
+$border-light: rgba(0, 0, 0, 0.08);
+$shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+.sidenav-container {
+  height: 100vh;
+  background: $background-white;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 260px;
+  z-index: 1000;
+}
+
+.matero-sidebar {
+  width: 260px;
+  background: $background-white;
+  color: $text-dark;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-right: 1px solid $border-light;
+  box-shadow: $shadow;
+  transition: all $swift-ease-out-duration $swift-ease-out-timing-function;
+  z-index: 1000;
+  opacity: 1 !important;
+}
+
+.matero-sidebar-header {
+  background: linear-gradient(135deg, $primary-blue 0%, $secondary-blue 100%);
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  border-bottom: none;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  opacity: 1 !important;
+
+  mat-toolbar {
+    background: transparent;
+    color: white;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-icon {
+  font-size: 2.25rem;
+  height: 2.25rem;
+  width: 2.25rem;
+  color: white;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.matero-sidebar-header h2 {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: white !important;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  opacity: 1 !important;
+}
+
+.matero-sidebar-main {
+  height: calc(100% - 64px);
+  padding: 1.5rem 1rem;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: $secondary-blue $background-white;
+  opacity: 1 !important;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $background-white;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $secondary-blue;
+    border-radius: 3px;
+    transition: background $swift-ease-out-duration $swift-ease-out-timing-function;
+
+    &:hover {
+      background: darken($secondary-blue, 10%);
+    }
+  }
+}
+
+.user-panel-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.7); /* More transparent */
+  border-radius: 14px;
+  margin: 0.75rem 0.5rem;
+  padding: 0.75rem;
+  backdrop-filter: blur(15px); /* Stronger blur for frosted glass effect */
+  border: 1.5px solid rgba(255, 255, 255, 0.4); /* More defined border */
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1); /* Stronger shadow */
+  transition: all $swift-ease-out-duration $swift-ease-out-timing-function;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.85);
+    transform: scale(1.02); /* Subtle scale on hover */
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  }
+}
+
+mat-nav-list a {
+  color: $text-dark !important;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  padding: 0.85rem 1.25rem;
+  margin: 0.3rem 0.5rem;
+  border-radius: 8px;
+  transition: all $swift-ease-out-duration $swift-ease-out-timing-function;
+  text-decoration: none;
+  font-size: 0.95rem;
+  position: relative;
+  overflow: hidden;
+  opacity: 1 !important;
+
+  &:hover {
+    background-color: $hover-blue;
+    color: $secondary-blue !important;
+    transform: translateX(4px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  &.active {
+    background-color: $active-blue;
+    color: $secondary-blue !important;
+    font-weight: 600;
+    border-left: 4px solid $secondary-blue;
+    padding-left: 1.15rem;
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2));
+    transform: translateX(-100%);
+    transition: transform $swift-ease-out-duration $swift-ease-out-timing-function;
+  }
+
+  &:hover::before {
+    transform: translateX(100%);
+  }
+}
+
+mat-nav-list mat-icon {
+  margin-right: 0.75rem;
+  color: $secondary-blue;
+  font-size: 1.3rem;
+  width: 1.3rem;
+  height: 1.3rem;
+  transition: transform $swift-ease-out-duration $swift-ease-out-timing-function;
+
+  a:hover & {
+    transform: scale(1.1);
+  }
+}
+
+:host-context(.dark-theme) {
+  .matero-sidebar {
+    background: #0f172a;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .matero-sidebar-header {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  }
+
+  .user-panel-container {
+    background: rgba(255, 255, 255, 0.1); /* More transparent for dark theme */
+    border: 1.5px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+  }
+
+  mat-nav-list a {
+    color: #d1d5db !important;
+
+    &:hover {
+      background-color: rgba(59, 130, 246, 0.2);
+      color: #bfdbfe !important;
+    }
+
+    &.active {
+      background-color: rgba(59, 130, 246, 0.3);
+      color: #bfdbfe !important;
+      border-left: 4px solid #bfdbfe;
+    }
+  }
+
+  mat-nav-list mat-icon {
+    color: #bfdbfe;
+  }
+
+  .matero-sidebar-main {
+    scrollbar-color: #bfdbfe #0f172a;
+
+    &::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #bfdbfe;
+
+      &:hover {
+        background: lighten(#bfdbfe, 10%);
+      }
+    }
+  }
+}
+
+@media (max-width: 599px) {
+  .sidenav-container {
+    width: 220px;
+  }
+
+  .matero-sidebar {
+    width: 220px;
+    z-index: 1000;
+  }
+
+  .matero-sidebar-main {
+    height: calc(100% - 56px);
+  }
+
+  .matero-sidebar-header h2 {
+    font-size: 1.4rem;
+  }
+
+  mat-nav-list a {
+    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .user-panel-container {
+    margin: 0.5rem;
+    padding: 0.5rem;
+  }
+}

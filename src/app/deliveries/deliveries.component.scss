@@ -250,6 +250,17 @@ td.mat-cell button[mat-mini-fab]:hover {
   transform: scale(1.1);
 }
 
+.address-link {
+  color: #2563eb;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.address-link:hover {
+  text-decoration: underline;
+  color: #1e40af;
+}
+
 .chart-card {
   border-radius: 12px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
@@ -389,6 +400,14 @@ td.mat-cell button[mat-mini-fab]:hover {
 
   td.mat-cell button[mat-mini-fab]:hover {
     background-color: #93c5fd;
+  }
+
+  .address-link {
+    color: #60a5fa;
+  }
+
+  .address-link:hover {
+    color: #93c5fd;
   }
 
   .alert-banner {

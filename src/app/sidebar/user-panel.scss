@@ -1,0 +1,111 @@
+@use '@angular/material' as mat;
+
+$swift-ease-out-duration: 0.3s;
+$swift-ease-out-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+
+$primary-blue: #1e3a8a;
+$secondary-blue: #2563eb;
+$hover-blue: rgba(37, 99, 235, 0.1);
+$text-dark: #111827;
+
+:host {
+  display: block;
+  width: 100%;
+  opacity: 1 !important;
+}
+
+:host ::ng-deep .matero-user-panel {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* Align avatar and text to the left */
+  padding: 0.5rem;
+  cursor: pointer;
+  background-color: transparent !important;
+  border-radius: 10px;
+  transition: all $swift-ease-out-duration $swift-ease-out-timing-function;
+  opacity: 1 !important;
+
+  &:hover,
+  &:focus {
+    background-color: rgba(37, 99, 235, 0.1) !important;
+    transform: translateX(2px);
+  }
+}
+
+:host ::ng-deep .matero-user-panel-avatar {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid $secondary-blue;
+  transition: transform $swift-ease-out-duration $swift-ease-out-timing-function;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  margin-right: 0.5rem; /* Space between avatar and text */
+  opacity: 1 !important;
+
+  [dir='rtl'] & {
+    margin-right: 0;
+    margin-left: 0.5rem;
+  }
+
+  .matero-user-panel:hover & {
+    transform: scale(1.05);
+  }
+}
+
+:host ::ng-deep .matero-user-panel-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Vertically center text */
+  align-items: flex-start; /* Align text to the left */
+  opacity: 1 !important;
+
+  [dir='rtl'] & {
+    align-items: flex-end;
+  }
+
+  h4.matero-user-panel-name,
+  h5.matero-user-panel-email {
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: $text-dark !important;
+    opacity: 1 !important;
+  }
+
+  h4.matero-user-panel-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  h5.matero-user-panel-email {
+    font-size: 0.7rem;
+    font-weight: 400;
+    color: rgba($text-dark, 0.7) !important;
+  }
+}
+
+:host-context(.dark-theme) {
+  :host ::ng-deep .matero-user-panel {
+    background-color: transparent !important;
+
+    &:hover,
+    &:focus {
+      background-color: rgba(59, 130, 246, 0.2) !important;
+    }
+  }
+
+  :host ::ng-deep .matero-user-panel-info h4.matero-user-panel-name {
+    color: #e2e8f0 !important;
+  }
+
+  :host ::ng-deep .matero-user-panel-info h5.matero-user-panel-email {
+    color: rgba(226, 232, 240, 0.75) !important;
+  }
+
+  :host ::ng-deep .matero-user-panel-avatar {
+    border-color: #bfdbfe;
+  }
+}

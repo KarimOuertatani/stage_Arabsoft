@@ -7,9 +7,7 @@
           <h2>ADMIN</h2>
         }
       </div>
-      <button mat-icon-button class="toggle-button" (click)="toggleSidenav()" [matTooltip]="isSidenavCollapsed ? 'Expand Menu' : 'Collapse Menu'">
-        <mat-icon>{{ isSidenavCollapsed ? 'menu' : 'menu_open' }}</mat-icon>
-      </button>
+     
     </div>
     <mat-divider></mat-divider>
     <mat-nav-list>
@@ -43,6 +41,9 @@
   <mat-sidenav-content>
     <div class="orders-wrapper">
       <div class="orders-header">
+        <button mat-icon-button class="sidenav-toggle" (click)="toggleSidenav()" [matTooltip]="isSidenavCollapsed ? 'Show Sidebar' : 'Hide Sidebar'">
+            <mat-icon>{{ isSidenavCollapsed ? 'menu' : 'menu_open' }}</mat-icon>
+          </button>
         <h1>Orders Management</h1>
         <div class="user-info">
           <span class="user-name">{{ currentUser?.nom || 'User' }}</span>

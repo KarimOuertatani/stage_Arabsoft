@@ -1,166 +1,152 @@
-<mat-sidenav-container class="sidenav-container">
-  <!-- Sidebar -->
-  <mat-sidenav #sidenav mode="side" [opened]="!isSidenavCollapsed" class="sidenav" [ngClass]="{'collapsed': isSidenavCollapsed}">
-    <div class="sidenav-header">
-      <div class="logo-container">
-        <mat-icon class="logo-icon">inventory</mat-icon>
-        @if (!isSidenavCollapsed) {
-          <h2>ADMIN</h2>
+<div class="dashboard-wrapper">
+  <app-sidebar [showUser]="true" [showHeader]="true"></app-sidebar>
+  <div class="dashboard-header">
+    <h1>Dashboard</h1>
+    <div class="user-info">
+      <mat-form-field class="period-select">
+        <mat-label>Period</mat-label>
+        <mat-select [(ngModel)]="selectedPeriod" (ngModelChange)="onPeriodChange()">
+          @for (option of periodOptions; track option.value) {
+            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <span class="user-name">{{ currentUser?.nom || 'User' }}</span>
+      <button mat-icon-button class="theme-toggle" (click)="toggleTheme()" [matTooltip]="isDarkTheme ? 'Switch to Light Theme' : 'Switch to Dark Theme'">
+        <mat-icon>{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</mat-icon>
+      </button>
+      <button mat-icon-button class="logout-button" (click)="logout()" matTooltip="Logout">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <div class="dashboard-container">
+    @if (isLoading) {
+      <div class="loading-spinner">
+        <mat-spinner></mat-spinner>
+        <p>Loading dashboard...</p>
+      </div>
+    } @else if (errorMessage) {
+      <mtx-alert type="info" class="error-banner">
+        <mat-icon>error</mat-icon>
+        {{ errorMessage }}
+        <button mat-stroked-button color="warn" (click)="retry()">Retry</button>
+      </mtx-alert>
+    } @else {
+      @if (isShowAlert) {
+        <mtx-alert type="info" class="alert-banner">
+          <mat-icon>star</mat-icon>
+          <span>🌟 Welcome to Smart Inventory - Your Ultimate Business Dashboard!</span>
+          <a href="#" class="learn-more" (click)="onAlertDismiss()">Explore Features</a>
+        </mtx-alert>
+      }
+
+      <div class="stats-grid" [ngStyle]="{'grid-template-columns': 'repeat(' + gridCols + ', minmax(250px, 1fr))'}">
+        @for (stat of stats; track stat.title) {
+          <mat-card class="stat-card" (click)="onStatClick(stat)" [matTooltip]="stat.tooltip">
+            <div class="stat-content-wrapper">
+              <mat-icon class="stat-icon">{{ stat.icon }}</mat-icon>
+              <h3 class="stat-title">{{ stat.title }}</h3>
+              <h2 class="stat-content">
+                @if (stat.title === 'Total Revenue') {
+                  {{ stat.amount | currency:'EUR' }}
+                } @else {
+                  {{ stat.amount }}
+                }
+              </h2>
+              <a href="#" class="learn-more">View Details</a>
+            </div>
+          </mat-card>
         }
       </div>
-      
-    </div>
-    <mat-divider></mat-divider>
-    <mat-nav-list>
-      <a mat-list-item [routerLink]="['/dashboard']" routerLinkActive="active" [matTooltip]="isSidenavCollapsed ? 'Dashboard' : ''">
-        <mat-icon>dashboard</mat-icon>
-        @if (!isSidenavCollapsed) { <span>Dashboard</span> }
-      </a>
-      <a mat-list-item [routerLink]="['/users']" routerLinkActive="active" [matTooltip]="isSidenavCollapsed ? 'Users' : ''">
-        <mat-icon>people</mat-icon>
-        @if (!isSidenavCollapsed) { <span>Users</span> }
-      </a>
-      <a mat-list-item [routerLink]="['/orders']" routerLinkActive="active" [matTooltip]="isSidenavCollapsed ? 'Orders' : ''">
-        <mat-icon>shopping_cart</mat-icon>
-        @if (!isSidenavCollapsed) { <span>Orders</span> }
-      </a>
-      <a mat-list-item [routerLink]="['/categories']" routerLinkActive="active" [matTooltip]="isSidenavCollapsed ? 'Categories' : ''">
-        <mat-icon>category</mat-icon>
-        @if (!isSidenavCollapsed) { <span>Categories</span> }
-      </a>
-      <a mat-list-item [routerLink]="['/products']" routerLinkActive="active" [matTooltip]="isSidenavCollapsed ? 'Products' : ''">
-        <mat-icon>inventory_2</mat-icon>
-        @if (!isSidenavCollapsed) { <span>Products</span> }
-      </a>
-      <a mat-list-item [routerLink]="['/deliveries']" routerLinkActive="active" [matTooltip]="isSidenavCollapsed ? 'Deliveries' : ''">
-        <mat-icon>local_shipping</mat-icon>
-        @if (!isSidenavCollapsed) { <span>Deliveries</span> }
-      </a>
-    </mat-nav-list>
-  </mat-sidenav>
 
-  <!-- Main Content -->
-  <mat-sidenav-content>
-    <div class="dashboard-wrapper">
-      <div class="dashboard-header">
-        <div class="header-left">
-          <button mat-icon-button class="sidenav-toggle" (click)="toggleSidenav()" [matTooltip]="isSidenavCollapsed ? 'Show Sidebar' : 'Hide Sidebar'">
-            <mat-icon>{{ isSidenavCollapsed ? 'menu' : 'menu_open' }}</mat-icon>
-          </button>
-          <h1>Dashboard</h1>
-        </div>
-        <div class="user-info">
-          <span class="user-name">{{ currentUser?.nom || 'User' }}</span>
-          <button mat-icon-button class="theme-toggle" (click)="toggleTheme()" matTooltip="Toggle Theme">
-            <mat-icon>{{ isDarkTheme ? 'light_mode' : 'dark_mode' }}</mat-icon>
-          </button>
-          <button mat-icon-button class="logout-button" (click)="logout()" matTooltip="Logout">
-            <mat-icon>logout</mat-icon>
-          </button>
-        </div>
+      <div class="charts-container">
+        <mat-card class="chart-card">
+          <mat-card-title>Order Trends</mat-card-title>
+          <mat-card-content>
+            <canvas baseChart [data]="lineChartData" [options]="lineChartOptions" type="line" class="chart-canvas"></canvas>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="chart-card">
+          <mat-card-title>Delivery Status Breakdown</mat-card-title>
+          <mat-card-content>
+            <canvas baseChart [data]="donutChartData" [options]="donutChartOptions" type="doughnut" class="chart-canvas"></canvas>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="chart-card">
+          <mat-card-title>Product Category Breakdown</mat-card-title>
+          <mat-card-content>
+            <canvas baseChart [data]="pieChartData" [options]="pieChartOptions" type="pie" class="chart-canvas"></canvas>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="chart-card table-card">
+          <mat-card-title>Recent Products</mat-card-title>
+          <mat-card-content>
+            <table mat-table [dataSource]="recentProduits">
+              <ng-container matColumnDef="image">
+                <th mat-header-cell *matHeaderCellDef>Image</th>
+                <td mat-cell *matCellDef="let produit">
+                  <img [src]="produit.image || 'assets/images/default-product.png'" class="product-image" alt="Product Image" (click)="openImageDialog(produit.image || 'assets/images/default-product.png', produit.nom)">
+                </td>
+              </ng-container>
+              <ng-container matColumnDef="nom">
+                <th mat-header-cell *matHeaderCellDef>Name</th>
+                <td mat-cell *matCellDef="let produit">{{ produit.nom }}</td>
+              </ng-container>
+              <ng-container matColumnDef="categorie">
+                <th mat-header-cell *matHeaderCellDef>Category</th>
+                <td mat-cell *matCellDef="let produit">{{ produit.categorie?.nom || 'N/A' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="prix">
+                <th mat-header-cell *matHeaderCellDef>Price</th>
+                <td mat-cell *matCellDef="let produit">{{ produit.prix | currency:'EUR' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="quantite">
+                <th mat-header-cell *matHeaderCellDef>Quantity</th>
+                <td mat-cell *matCellDef="let produit">{{ produit.quantite }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="displayedProductColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedProductColumns;" [ngClass]="{'alternate-row': row.quantite % 2 === 0}"></tr>
+            </table>
+            <mat-paginator #produitPaginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="chart-card table-card">
+          <mat-card-title>Recent Orders</mat-card-title>
+          <mat-card-content>
+            <table mat-table [dataSource]="recentCommandes">
+              <ng-container matColumnDef="id">
+                <th mat-header-cell *matHeaderCellDef>ID</th>
+                <td mat-cell *matCellDef="let commande">{{ commande.id }}</td>
+              </ng-container>
+              <ng-container matColumnDef="client">
+                <th mat-header-cell *matHeaderCellDef>Client</th>
+                <td mat-cell *matCellDef="let commande">{{ commande.client?.nom || 'N/A' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="total">
+                <th mat-header-cell *matHeaderCellDef>Total</th>
+                <td mat-cell *matCellDef="let commande">{{ commande.total | currency:'EUR' }}</td>
+              </ng-container>
+              <ng-container matColumnDef="statut">
+                <th mat-header-cell *matHeaderCellDef>Status</th>
+                <td mat-cell *matCellDef="let commande">{{ commande.statut }}</td>
+              </ng-container>
+              <ng-container matColumnDef="date">
+                <th mat-header-cell *matHeaderCellDef>Date</th>
+                <td mat-cell *matCellDef="let commande">{{ commande.dateCreation | date:'short' }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="displayedCommandeColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: displayedCommandeColumns;" [ngClass]="{'alternate-row': row.id % 2 === 0}"></tr>
+            </table>
+            <mat-paginator #commandePaginator [pageSizeOptions]="[5, 10, 20]" showFirstLastButtons></mat-paginator>
+          </mat-card-content>
+        </mat-card>
       </div>
-
-      <div class="dashboard-container">
-        @if (isLoading) {
-          <div class="loading-spinner">
-            <mat-spinner diameter="50"></mat-spinner>
-            <p>Loading dashboard...</p>
-          </div>
-        } @else if (errorMessage) {
-          <mtx-alert type="info" class="error-banner">
-            <mat-icon mtxAlertIcon>error</mat-icon>
-            <span>{{ errorMessage }}</span>
-            <button mat-flat-button color="primary" (click)="retry()">Retry</button>
-          </mtx-alert>
-        } @else {
-          <!-- Welcome Banner -->
-          @if (isShowAlert) {
-            <mtx-alert type="info" class="alert-banner" (dismiss)="onAlertDismiss()">
-              <mat-icon mtxAlertIcon>star</mat-icon>
-              <span>🌟 Welcome to Smart Inventory - Your Ultimate Business Dashboard!</span>
-              <a class="learn-more" href="#" matTooltip="Explore Features">Explore Features</a>
-            </mtx-alert>
-          }
-
-          <!-- Stats Grid -->
-          <mat-grid-list [cols]="gridCols" rowHeight="220px" gutterSize="24px" class="stats-grid">
-            @for (stat of stats; track stat.title) {
-              <mat-grid-tile>
-                <mat-card class="stat-card" (click)="onStatClick(stat)" [matTooltip]="stat.tooltip">
-                  <div class="stat-content-wrapper">
-                    <mat-icon class="stat-icon">{{ stat.icon }}</mat-icon>
-                    <h3 class="stat-title">{{ stat.title }}</h3>
-                    <p class="stat-content">{{ stat.amount }}</p>
-                    <a class="learn-more" href="#" matTooltip="View Details">View Details</a>
-                  </div>
-                </mat-card>
-              </mat-grid-tile>
-            }
-          </mat-grid-list>
-
-          <!-- Charts Section -->
-          <div class="charts-container">
-            <mat-card class="chart-card">
-              <mat-card-title>Order Trends</mat-card-title>
-              <mat-card-content>
-                <canvas baseChart
-                        [data]="lineChartData"
-                        [options]="lineChartOptions"
-                        [type]="'line'"
-                        class="chart-canvas">
-                </canvas>
-              </mat-card-content>
-            </mat-card>
-
-            @if (categoryStats.length > 0) {
-              <mat-card class="chart-card">
-                <mat-card-title>Products by Category</mat-card-title>
-                <mat-card-content>
-                  <canvas baseChart
-                          [data]="pieChartData"
-                          [options]="pieChartOptions"
-                          [type]="'pie'"
-                          class="chart-canvas">
-                  </canvas>
-                </mat-card-content>
-              </mat-card>
-            }
-          </div>
-
-          <!-- Table Section -->
-          @if (categoryStats.length > 0) {
-            <mat-card class="chart-card table-card">
-              <mat-card-title>Product Category Breakdown</mat-card-title>
-              <mat-card-content>
-                <table mat-table [dataSource]="categoryStats">
-                  <ng-container matColumnDef="category">
-                    <th mat-header-cell *matHeaderCellDef>Category</th>
-                    <td mat-cell *matCellDef="let stat">{{ stat.name }}</td>
-                  </ng-container>
-                  <ng-container matColumnDef="count">
-                    <th mat-header-cell *matHeaderCellDef>Product Count</th>
-                    <td mat-cell *matCellDef="let stat">{{ stat.count }}</td>
-                  </ng-container>
-                  <ng-container matColumnDef="percentage">
-                    <th mat-header-cell *matHeaderCellDef>Percentage</th>
-                    <td mat-cell *matCellDef="let stat">{{ stat.percentage | number:'1.1-1' }}%</td>
-                  </ng-container>
-                  <ng-container matColumnDef="actions">
-                    <th mat-header-cell *matHeaderCellDef>Actions</th>
-                    <td mat-cell *matCellDef="let stat">
-                      <button mat-mini-fab color="primary" (click)="viewCategory(stat)" matTooltip="View Category">
-                        <mat-icon>visibility</mat-icon>
-                      </button>
-                    </td>
-                  </ng-container>
-                  <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-                  <tr mat-row *matRowDef="let row; columns: displayedColumns; let i = index" [ngClass]="{'alternate-row': i % 2 === 1}"></tr>
-                </table>
-              </mat-card-content>
-            </mat-card>
-          }
-        }
-      </div>
-    </div>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+    }
+  </div>
+</div>

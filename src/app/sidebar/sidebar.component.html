@@ -1,0 +1,29 @@
+<div class="sidenav-container">
+  <mat-sidenav class="matero-sidebar" mode="side" opened fixedInViewport fixedTopGap="0">
+    @if (showHeader) {
+      <mat-toolbar class="matero-sidebar-header">
+        <div class="logo-container">
+          <mat-icon class="logo-icon">inventory</mat-icon>
+          <h2>ADMIN</h2>
+        </div>
+      </mat-toolbar>
+    }
+
+    <div class="matero-sidebar-main">
+      @if (showUser) {
+        <div class="user-panel-container">
+          <app-user-panel></app-user-panel>
+        </div>
+      }
+
+      <mat-nav-list>
+        @for (item of navItems; track item.route) {
+          <a mat-list-item [routerLink]="item.route" routerLinkActive="active">
+            <mat-icon>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        }
+      </mat-nav-list>
+    </div>
+  </mat-sidenav>
+</div>

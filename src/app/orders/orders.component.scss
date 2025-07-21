@@ -275,6 +275,15 @@ td.mat-cell button[mat-icon-button]:hover {
   color: #1e3a8a;
 }
 
+.detail-row mat-select {
+  margin-left: 8px;
+  width: 150px;
+}
+
+.detail-row button[mat-raised-button] {
+  margin-top: 8px;
+}
+
 .chart-card {
   border-radius: 12px;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
@@ -368,6 +377,10 @@ td.mat-cell button[mat-icon-button]:hover {
   .detail-row table {
     display: block;
     overflow-x: auto;
+  }
+
+  .detail-row mat-select {
+    width: 120px;
   }
 }
 
