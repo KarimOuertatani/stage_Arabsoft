@@ -4,8 +4,8 @@ import 'package:gestion_produit_flutter/screens/SupplierProductListScreen.dart';
 import 'package:gestion_produit_flutter/screens/login_screen.dart';
 import 'package:gestion_produit_flutter/screens/register_screen.dart';
 import 'package:gestion_produit_flutter/screens/product_list_screen.dart';
-import 'package:gestion_produit_flutter/screens/supplier_my_product_list_screen.dart';
-import 'package:gestion_produit_flutter/screens/supplier_profile_screen.dart';
+import 'package:gestion_produit_flutter/screens/supplier_product_list_screen.dart';
+import 'package:gestion_produit_flutter/screens/supplier_profile_screen.dart' hide SupplierProfileScreen;
 import 'package:gestion_produit_flutter/screens/settings_screen.dart';
 import 'package:gestion_produit_flutter/screens/admin_home_screen.dart';
 import 'package:gestion_produit_flutter/screens/admin_product_list_screen.dart';
@@ -93,10 +93,6 @@ class MyApp extends StatelessWidget {
         '/admin-profile': (context) {
           final adminId = ModalRoute.of(context)!.settings.arguments as int;
           return AdminProfileScreen(adminId: adminId);
-        },
-        '/supplier-my-products': (context) { // Route ajoutée
-          final fournisseurId = ModalRoute.of(context)!.settings.arguments as int;
-          return SupplierMyProductListScreen(fournisseurId: fournisseurId);
         },
       },
     );
