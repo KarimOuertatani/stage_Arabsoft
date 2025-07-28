@@ -13,11 +13,16 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/commande")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class CommandeController {
 
     private final CommandeService service;
 
+    @GetMapping
+    public ResponseEntity<List<CommandeDTO>> getAllCommandes() {
+        List<CommandeDTO> commandes = service.getAllCommandes();
+        return ResponseEntity.ok(commandes);
+    }
     @PostMapping("/acheter")
     public ResponseEntity<Commande> acheter(@RequestBody AchatRequest request) {
         Commande commande = service.ajouterProduitAuPanier(

@@ -28,6 +28,10 @@ public class UtilisateurService {
         return utilisateurRepository.findById(id);
     }
 
+    public Optional<Utilisateur> getUtilisateurByEmail(String email) {
+        return utilisateurRepository.findByEmail(email);
+    }
+
     public Utilisateur saveUtilisateur(Utilisateur utilisateur) {
         if (utilisateurRepository.findByEmail(utilisateur.getEmail()).isPresent()) {
             throw new IllegalArgumentException("L'email est déjà utilisé");
@@ -57,6 +61,13 @@ public class UtilisateurService {
         utilisateur.setTypeUtilisateur(utilisateurDetails.getTypeUtilisateur());
 
         return utilisateurRepository.save(utilisateur);
+    }
+
+    public void updatePassword(Integer id, String newPassword) {
+        Utilisateur utilisateur = utilisateurRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Utilisateur non trouvé avec l'ID: " + id));
+        utilisateur.setMotDePasse(passwordEncoder.encode(newPassword));
+        utilisateurRepository.save(utilisateur);
     }
 
     public void deleteUtilisateur(Integer id) {

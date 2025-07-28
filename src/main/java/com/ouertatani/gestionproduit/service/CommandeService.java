@@ -73,4 +73,10 @@ public class CommandeService {
                 .map(CommandeDTO::new)
                 .collect(Collectors.toList());
     }
+    public List<CommandeDTO> getAllCommandes() {
+        List<Commande> commandes = commandeRepository.findAll();
+        return commandes.stream()
+                .map(CommandeDTO::new)
+                .collect(Collectors.toList());
+    }
 }
