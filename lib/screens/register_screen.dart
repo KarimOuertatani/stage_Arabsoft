@@ -38,6 +38,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     });
 
     try {
+      // Register the user
       final utilisateur = await ApiService().register(
         nom: _nomController.text.trim(),
         prenom: _prenomController.text.trim(),
@@ -51,13 +52,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
             : DateFormat('dd/MM/yyyy').parse(_dateNaissanceController.text),
         typeUtilisateur: _selectedRole,
       );
+
       if (utilisateur != null) {
+        // Log in the user to obtain a JWT token
+        await ApiService().login(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
+
+        // Try to create a secret code
+        String? codeSecret;
+        try {
+          final codeSecretClient = await ApiService().createSecretCode(
+            utilisateur.id,
+          );
+          codeSecret = codeSecretClient.codeSecret;
+        } catch (e) {
+          print('Failed to create secret code: $e');
+          // Continue with navigation even if secret code creation fails
+          codeSecret = null;
+        }
+
+        // Show success message with or without secret code
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              codeSecret != null
+                  ? 'Inscription réussie ! Votre code secret est : $codeSecret'
+                  : 'Inscription réussie ! Veuillez vérifier votre code secret ultérieurement.',
+            ),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+
+        // Navigate to the login screen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginScreen()),
-        );
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Inscription réussie ! Veuillez vous connecter.')),
         );
       } else {
         setState(() {

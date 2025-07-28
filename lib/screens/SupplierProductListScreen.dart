@@ -14,7 +14,7 @@ import 'profile_page.dart';
 import 'orders_page.dart';
 import 'deliveries_page.dart';
 import 'logout_page.dart';
-import 'package:gestion_produit_flutter/screens/supplier_product_list_screen.dart' as supplier_list;
+import 'supplier_my_product_list_screen.dart';
 import '../constants.dart';
 import 'dart:developer' as developer;
 
@@ -59,27 +59,16 @@ class _SupplierProductListScreenState extends State<SupplierProductListScreen> w
     super.dispose();
   }
 
-  Future<int> _getFournisseurId() async {
-    final token = await _storage.read(key: 'jwt_token');
-    developer.log('Token retrieved: ${token != null ? "Found" : "Not found"}', name: 'getFournisseurId');
-    if (token == null) {
-      throw Exception('Token non trouvé');
+  Future<int> _getUserId() async {
+    final clientId = await _storage.read(key: 'client_id');
+    developer.log('client_id retrieved: ${clientId != null ? "Found: $clientId" : "Not found"}', name: 'getUserId');
+    if (clientId == null) {
+      throw Exception('ID utilisateur non trouvé dans le stockage sécurisé');
     }
     try {
-      final parts = token.split('.');
-      if (parts.length != 3) {
-        throw Exception('Token JWT invalide');
-      }
-      final payload = json.decode(
-        utf8.decode(base64Url.decode(base64Url.normalize(parts[1]))),
-      );
-      final fournisseurId = payload['sub'] ?? payload['id'];
-      if (fournisseurId == null) {
-        throw Exception('ID fournisseur non trouvé dans le token');
-      }
-      return int.parse(fournisseurId.toString());
+      return int.parse(clientId);
     } catch (e) {
-      throw Exception('Erreur lors du décodage du token : $e');
+      throw Exception('Erreur lors de la conversion de l\'ID : $e');
     }
   }
 
@@ -327,10 +316,10 @@ class _SupplierProductListScreenState extends State<SupplierProductListScreen> w
         'label': 'Mes Produits',
         'onTap': () async {
           try {
-            developer.log('Attempting to get fournisseurId', name: 'MesProduits');
-            await _getFournisseurId(); // Verify token exists
-            developer.log('Navigation to /products', name: 'MesProduits');
-            Navigator.pushNamed(context, '/products');
+            developer.log('Attempting to get userId', name: 'MesProduits');
+            final userId = await _getUserId();
+            developer.log('Navigation to /supplier-my-products with userId: $userId', name: 'MesProduits');
+            Navigator.pushNamed(context, '/supplier-my-products', arguments: userId);
           } catch (e) {
             developer.log('Error in MesProduits: $e', name: 'MesProduits');
             ScaffoldMessenger.of(context).showSnackBar(
@@ -349,11 +338,11 @@ class _SupplierProductListScreenState extends State<SupplierProductListScreen> w
         'label': 'Commandes',
         'onTap': () async {
           try {
-            final fournisseurId = await _getFournisseurId();
+            final userId = await _getUserId();
             Navigator.pushNamed(
               context,
               '/client-orders',
-              arguments: fournisseurId,
+              arguments: userId,
             );
           } catch (e) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -372,11 +361,11 @@ class _SupplierProductListScreenState extends State<SupplierProductListScreen> w
         'label': 'Livraisons',
         'onTap': () async {
           try {
-            final fournisseurId = await _getFournisseurId();
+            final userId = await _getUserId();
             Navigator.pushNamed(
               context,
               '/client-deliveries',
-              arguments: fournisseurId,
+              arguments: userId,
             );
           } catch (e) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -395,13 +384,38 @@ class _SupplierProductListScreenState extends State<SupplierProductListScreen> w
         'label': 'Profil',
         'onTap': () async {
           try {
-            final fournisseurId = await _getFournisseurId();
+            final userId = await _getUserId();
             Navigator.pushNamed(
               context,
               '/client-profile',
-              arguments: fournisseurId,
+              arguments: userId,
             );
           } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Erreur : $e')),
+            );
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (_) => const LoginScreen()),
+              (route) => false,
+            );
+          }
+        },
+      },
+      {
+        'icon': 'assets/icons/secret_code_icon.svg', // Assumes an icon exists; adjust path if needed
+        'label': 'Mon Code Secret',
+        'onTap': () async {
+          try {
+            final userId = await _getUserId();
+            developer.log('Navigation to /secret-code with userId: $userId', name: 'MonCodeSecret');
+            Navigator.pushNamed(
+              context,
+              '/secret-code',
+              arguments: userId,
+            );
+          } catch (e) {
+            developer.log('Error in MonCodeSecret: $e', name: 'MonCodeSecret');
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Erreur : $e')),
             );
@@ -418,11 +432,11 @@ class _SupplierProductListScreenState extends State<SupplierProductListScreen> w
         'label': 'Déconnexion',
         'onTap': () async {
           try {
-            final fournisseurId = await _getFournisseurId();
+            final userId = await _getUserId();
             Navigator.pushNamed(
               context,
               '/client-logout',
-              arguments: fournisseurId,
+              arguments: userId,
             );
           } catch (e) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -695,8 +709,8 @@ class _SupplierProductListScreenState extends State<SupplierProductListScreen> w
                 ),
                 onPressed: () async {
                   try {
-                    await _getFournisseurId();
-                    Navigator.pushNamed(context, '/panier');
+                    final userId = await _getUserId();
+                    Navigator.pushNamed(context, '/panier', arguments: userId);
                   } catch (e) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Erreur : $e')),

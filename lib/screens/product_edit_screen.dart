@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:image_picker/image_picker.dart';
 import '../services/api_service.dart';
 import '../models/produit.dart';
 import '../models/utilisateur.dart' as user;
-import '../constants.dart';
 
 class ProductEditScreen extends StatefulWidget {
   final Produit produit;
@@ -28,13 +28,15 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
   late Future<List<Categorie>> _categoriesFuture;
   late Future<List<user.Utilisateur>> _utilisateursFuture;
 
+  final Color mediumYellow = const Color(0xffF8B250);
+  final Color darkGrey = const Color(0xff5E6172);
+
   @override
   void initState() {
     super.initState();
     if (widget.produit.id == null) {
       throw Exception('ID du produit invalide');
     }
-    print('Modification de produit avec ID: ${widget.produit.id}');
     _nomController.text = widget.produit.nom ?? '';
     _descriptionController.text = widget.produit.description ?? '';
     _prixController.text = widget.produit.prix?.toStringAsFixed(2) ?? '';
@@ -67,18 +69,26 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
           fournisseurId: _selectedUtilisateur!.id,
         );
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Produit modifié avec succès')),
+          SnackBar(
+            content: Text('Produit modifié avec succès', style: TextStyle(color: darkGrey)),
+            backgroundColor: mediumYellow.withOpacity(0.9),
+          ),
         );
         Navigator.pop(context);
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur : $e')),
+          SnackBar(
+            content: Text('Erreur : $e', style: const TextStyle(color: Colors.white)),
+            backgroundColor: Colors.redAccent,
+          ),
         );
-        print('Erreur lors de la modification : $e');
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vérifiez tous les champs')),
+        SnackBar(
+          content: Text('Vérifiez tous les champs', style: const TextStyle(color: Colors.white)),
+          backgroundColor: Colors.redAccent,
+        ),
       );
     }
   }
@@ -95,221 +105,326 @@ class _ProductEditScreenState extends State<ProductEditScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Modifier un produit'),
-        centerTitle: true,
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: SvgPicture.asset(
-            'assets/icons/back.svg',
-            colorFilter: const ColorFilter.mode(kTextColor, BlendMode.srcIn),
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: const AssetImage('assets/background.jpg'),
+                fit: BoxFit.cover,
+                onError: (exception, stackTrace) {
+                  print('Erreur de chargement de l\'image: $exception');
+                },
+              ),
+            ),
           ),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(kDefaultPaddin),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextFormField(
-                controller: _nomController,
-                decoration: InputDecoration(
-                  labelText: 'Nom',
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
+          Container(
+            decoration: BoxDecoration(color: mediumYellow.withOpacity(0.5)),
+          ),
+          SafeArea(
+            child: Column(
+              children: [
+                Container(
+                  height: kToolbarHeight + MediaQuery.of(context).padding.top,
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      IconButton(
+                        icon: SvgPicture.asset(
+                          'assets/icons/back.svg',
+                          height: 24,
+                          color: darkGrey,
+                        ),
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                      Text(
+                        'Modifier un produit',
+                        style: TextStyle(
+                          color: darkGrey,
+                          fontSize: 20.0,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 48), // Espace pour équilibrer
+                    ],
                   ),
-                ),
-                validator: (value) => value!.isEmpty ? 'Nom requis' : null,
-              ),
-              const SizedBox(height: kDefaultPaddin),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: InputDecoration(
-                  labelText: 'Description',
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                maxLines: 3,
-              ),
-              const SizedBox(height: kDefaultPaddin),
-              TextFormField(
-                controller: _prixController,
-                decoration: InputDecoration(
-                  labelText: 'Prix (€)',
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value!.isEmpty) return 'Prix requis';
-                  if (double.tryParse(value) == null || double.parse(value) <= 0) {
-                    return 'Prix invalide';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: kDefaultPaddin),
-              TextFormField(
-                controller: _quantiteController,
-                decoration: InputDecoration(
-                  labelText: 'Quantité',
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-                keyboardType: TextInputType.number,
-                validator: (value) {
-                  if (value!.isEmpty) return 'Quantité requise';
-                  if (int.tryParse(value) == null || int.parse(value) < 0) {
-                    return 'Quantité invalide';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: kDefaultPaddin),
-              FutureBuilder<List<Categorie>>(
-                future: _categoriesFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator(color: kTextColor);
-                  } else if (snapshot.hasError) {
-                    return Text('Erreur : ${snapshot.error}', style: const TextStyle(color: Colors.redAccent));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Text('Aucune catégorie trouvée', style: TextStyle(color: kTextLightColor));
-                  }
-                  if (_selectedCategorie == null && widget.produit.categorie != null) {
-                    _selectedCategorie = snapshot.data!.firstWhere(
-                      (cat) => cat.id == widget.produit.categorie!.id,
-                      orElse: () => snapshot.data!.first,
-                    );
-                  }
-                  return DropdownButtonFormField<Categorie>(
-                    value: _selectedCategorie,
-                    decoration: InputDecoration(
-                      labelText: 'Catégorie',
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
+                ).animate().fadeIn(duration: 600.ms),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          TextFormField(
+                            controller: _nomController,
+                            decoration: InputDecoration(
+                              labelText: 'Nom',
+                              labelStyle: TextStyle(color: darkGrey),
+                              filled: true,
+                              fillColor: Colors.white.withOpacity(0.9),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: mediumYellow.withOpacity(0.3)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: mediumYellow, width: 2),
+                              ),
+                            ),
+                            validator: (value) => value!.isEmpty ? 'Nom requis' : null,
+                          ).animate().fadeIn(duration: 600.ms, delay: 200.ms),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _descriptionController,
+                            decoration: InputDecoration(
+                              labelText: 'Description',
+                              labelStyle: TextStyle(color: darkGrey),
+                              filled: true,
+                              fillColor: Colors.white.withOpacity(0.9),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: mediumYellow.withOpacity(0.3)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: mediumYellow, width: 2),
+                              ),
+                            ),
+                            maxLines: 3,
+                          ).animate().fadeIn(duration: 600.ms, delay: 250.ms),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _prixController,
+                            decoration: InputDecoration(
+                              labelText: 'Prix (€)',
+                              labelStyle: TextStyle(color: darkGrey),
+                              filled: true,
+                              fillColor: Colors.white.withOpacity(0.9),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: mediumYellow.withOpacity(0.3)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: mediumYellow, width: 2),
+                              ),
+                            ),
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value!.isEmpty) return 'Prix requis';
+                              if (double.tryParse(value) == null || double.parse(value) <= 0) {
+                                return 'Prix invalide';
+                              }
+                              return null;
+                            },
+                          ).animate().fadeIn(duration: 600.ms, delay: 300.ms),
+                          const SizedBox(height: 16),
+                          TextFormField(
+                            controller: _quantiteController,
+                            decoration: InputDecoration(
+                              labelText: 'Quantité',
+                              labelStyle: TextStyle(color: darkGrey),
+                              filled: true,
+                              fillColor: Colors.white.withOpacity(0.9),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: mediumYellow.withOpacity(0.3)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(color: mediumYellow, width: 2),
+                              ),
+                            ),
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value!.isEmpty) return 'Quantité requise';
+                              if (int.tryParse(value) == null || int.parse(value) < 0) {
+                                return 'Quantité invalide';
+                              }
+                              return null;
+                            },
+                          ).animate().fadeIn(duration: 600.ms, delay: 350.ms),
+                          const SizedBox(height: 16),
+                          FutureBuilder<List<Categorie>>(
+                            future: _categoriesFuture,
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const Center(child: CircularProgressIndicator()).animate().fadeIn(duration: 600.ms, delay: 400.ms);
+                              } else if (snapshot.hasError) {
+                                return Text('Erreur : ${snapshot.error}', style: const TextStyle(color: Colors.redAccent)).animate().fadeIn(duration: 600.ms, delay: 400.ms);
+                              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                                return const Text('Aucune catégorie trouvée', style: TextStyle(color: Colors.grey)).animate().fadeIn(duration: 600.ms, delay: 400.ms);
+                              }
+                              if (_selectedCategorie == null && widget.produit.categorie != null) {
+                                _selectedCategorie = snapshot.data!.firstWhere(
+                                  (cat) => cat.id == widget.produit.categorie!.id,
+                                  orElse: () => snapshot.data!.first,
+                                );
+                              }
+                              return DropdownButtonFormField<Categorie>(
+                                value: _selectedCategorie,
+                                decoration: InputDecoration(
+                                  labelText: 'Catégorie',
+                                  labelStyle: TextStyle(color: darkGrey),
+                                  filled: true,
+                                  fillColor: Colors.white.withOpacity(0.9),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: mediumYellow.withOpacity(0.3)),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: mediumYellow, width: 2),
+                                  ),
+                                ),
+                                items: snapshot.data!.map((categorie) {
+                                  return DropdownMenuItem<Categorie>(
+                                    value: categorie,
+                                    child: Text(categorie.nom, style: TextStyle(color: darkGrey)),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedCategorie = value;
+                                  });
+                                },
+                                validator: (value) => value == null ? 'Catégorie requise' : null,
+                              ).animate().fadeIn(duration: 600.ms, delay: 400.ms);
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          FutureBuilder<List<user.Utilisateur>>(
+                            future: _utilisateursFuture,
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState == ConnectionState.waiting) {
+                                return const Center(child: CircularProgressIndicator()).animate().fadeIn(duration: 600.ms, delay: 450.ms);
+                              } else if (snapshot.hasError) {
+                                return Text('Erreur : ${snapshot.error}', style: const TextStyle(color: Colors.redAccent)).animate().fadeIn(duration: 600.ms, delay: 450.ms);
+                              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                                return const Text('Aucun utilisateur trouvé', style: TextStyle(color: Colors.grey)).animate().fadeIn(duration: 600.ms, delay: 450.ms);
+                              }
+                              if (_selectedUtilisateur == null && widget.produit.fournisseur != null) {
+                                _selectedUtilisateur = snapshot.data!.firstWhere(
+                                  (user) => user.id == widget.produit.fournisseur!.id,
+                                  orElse: () => snapshot.data!.first,
+                                );
+                              }
+                              return DropdownButtonFormField<user.Utilisateur>(
+                                value: _selectedUtilisateur,
+                                decoration: InputDecoration(
+                                  labelText: 'Fournisseur',
+                                  labelStyle: TextStyle(color: darkGrey),
+                                  filled: true,
+                                  fillColor: Colors.white.withOpacity(0.9),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: mediumYellow.withOpacity(0.3)),
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    borderSide: BorderSide(color: mediumYellow, width: 2),
+                                  ),
+                                ),
+                                items: snapshot.data!.map((utilisateur) {
+                                  return DropdownMenuItem<user.Utilisateur>(
+                                    value: utilisateur,
+                                    child: Text('${utilisateur.nom} ${utilisateur.prenom}', style: TextStyle(color: darkGrey)),
+                                  );
+                                }).toList(),
+                                onChanged: (value) {
+                                  setState(() {
+                                    _selectedUtilisateur = value;
+                                  });
+                                },
+                                validator: (value) => value == null ? 'Fournisseur requis' : null,
+                              ).animate().fadeIn(duration: 600.ms, delay: 450.ms);
+                            },
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: _pickImage,
+                            style: ElevatedButton.styleFrom(
+                              minimumSize: const Size(double.infinity, 48),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              backgroundColor: mediumYellow,
+                              shadowColor: Colors.black.withOpacity(0.2),
+                              elevation: 4,
+                            ),
+                            child: Text(
+                              'Choisir une image',
+                              style: TextStyle(color: darkGrey, fontWeight: FontWeight.bold),
+                            ),
+                          ).animate().fadeIn(duration: 600.ms, delay: 500.ms),
+                          if (_image != null)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              child: Image.file(
+                                _image!,
+                                height: 100,
+                                errorBuilder: (context, error, stackTrace) => Text(
+                                  'Erreur image',
+                                  style: TextStyle(color: Colors.redAccent),
+                                ),
+                              ),
+                            ).animate().fadeIn(duration: 600.ms, delay: 550.ms),
+                          const SizedBox(height: 16),
+                          Center(
+                            child: ElevatedButton(
+                              onPressed: _submitForm,
+                              style: ElevatedButton.styleFrom(
+                                minimumSize: const Size(double.infinity, 48),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                backgroundColor: mediumYellow,
+                                shadowColor: Colors.black.withOpacity(0.2),
+                                elevation: 4,
+                              ),
+                              child: Text(
+                                'Modifier le produit',
+                                style: TextStyle(color: darkGrey, fontWeight: FontWeight.bold),
+                              ),
+                            ).animate().fadeIn(duration: 600.ms, delay: 600.ms),
+                          ),
+                        ],
                       ),
                     ),
-                    items: snapshot.data!.map((categorie) {
-                      return DropdownMenuItem<Categorie>(
-                        value: categorie,
-                        child: Text(categorie.nom),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedCategorie = value;
-                      });
-                    },
-                    validator: (value) => value == null ? 'Catégorie requise' : null,
-                  );
-                },
-              ),
-              const SizedBox(height: kDefaultPaddin),
-              FutureBuilder<List<user.Utilisateur>>(
-                future: _utilisateursFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const CircularProgressIndicator(color: kTextColor);
-                  } else if (snapshot.hasError) {
-                    return Text('Erreur : ${snapshot.error}', style: const TextStyle(color: Colors.redAccent));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Text('Aucun utilisateur trouvé', style: TextStyle(color: kTextLightColor));
-                  }
-                  if (_selectedUtilisateur == null && widget.produit.fournisseur != null) {
-                    _selectedUtilisateur = snapshot.data!.firstWhere(
-                      (user) => user.id == widget.produit.fournisseur!.id,
-                      orElse: () => snapshot.data!.first,
-                    );
-                  }
-                  return DropdownButtonFormField<user.Utilisateur>(
-                    value: _selectedUtilisateur,
-                    decoration: InputDecoration(
-                      labelText: 'Fournisseur',
-                      filled: true,
-                      fillColor: Colors.grey[100],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    items: snapshot.data!.map((utilisateur) {
-                      return DropdownMenuItem<user.Utilisateur>(
-                        value: utilisateur,
-                        child: Text('${utilisateur.nom} ${utilisateur.prenom}'),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        _selectedUtilisateur = value;
-                      });
-                    },
-                    validator: (value) => value == null ? 'Fournisseur requis' : null,
-                  );
-                },
-              ),
-              const SizedBox(height: kDefaultPaddin),
-              ElevatedButton(
-                onPressed: _pickImage,
-                style: ElevatedButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 48),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  backgroundColor: const Color(0xFF3D82AE),
-                ),
-                child: const Text(
-                  'Choisir une image',
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                ),
-              ),
-              if (_image != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: kDefaultPaddin),
-                  child: Image.file(_image!, height: 100, errorBuilder: (context, error, stackTrace) => const Text('Erreur image')),
-                ),
-              const SizedBox(height: kDefaultPaddin),
-              Center(
-                child: ElevatedButton(
-                  onPressed: _submitForm,
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 48),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    backgroundColor: const Color(0xFF3D82AE),
-                  ),
-                  child: const Text(
-                    'Modifier le produit',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

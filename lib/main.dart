@@ -4,8 +4,8 @@ import 'package:gestion_produit_flutter/screens/SupplierProductListScreen.dart';
 import 'package:gestion_produit_flutter/screens/login_screen.dart';
 import 'package:gestion_produit_flutter/screens/register_screen.dart';
 import 'package:gestion_produit_flutter/screens/product_list_screen.dart';
-import 'package:gestion_produit_flutter/screens/supplier_product_list_screen.dart';
-import 'package:gestion_produit_flutter/screens/supplier_profile_screen.dart' hide SupplierProfileScreen;
+import 'package:gestion_produit_flutter/screens/supplier_my_product_list_screen.dart';
+import 'package:gestion_produit_flutter/screens/supplier_profile_screen.dart';
 import 'package:gestion_produit_flutter/screens/settings_screen.dart';
 import 'package:gestion_produit_flutter/screens/admin_home_screen.dart';
 import 'package:gestion_produit_flutter/screens/admin_product_list_screen.dart';
@@ -17,6 +17,8 @@ import 'package:gestion_produit_flutter/screens/profile_page.dart';
 import 'package:gestion_produit_flutter/screens/orders_page.dart';
 import 'package:gestion_produit_flutter/screens/deliveries_page.dart';
 import 'package:gestion_produit_flutter/screens/logout_page.dart';
+import 'package:gestion_produit_flutter/screens/secret_code_screen.dart';
+import 'package:gestion_produit_flutter/screens/ResetPasswordScreen.dart'; // Added import
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -94,6 +96,15 @@ class MyApp extends StatelessWidget {
           final adminId = ModalRoute.of(context)!.settings.arguments as int;
           return AdminProfileScreen(adminId: adminId);
         },
+        '/supplier-my-products': (context) {
+          final fournisseurId = ModalRoute.of(context)!.settings.arguments as int;
+          return SupplierMyProductListScreen(fournisseurId: fournisseurId);
+        },
+        '/secret-code': (context) {
+          final clientId = ModalRoute.of(context)!.settings.arguments as int;
+          return const SecretCodeScreen();
+        },
+        '/reset-password': (context) => const ResetPasswordScreen(), // Added route
       },
     );
   }

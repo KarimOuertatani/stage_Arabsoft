@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:gestion_produit_flutter/models/code_secret_client.dart';
 import 'package:gestion_produit_flutter/models/commande.dart';
 import 'package:gestion_produit_flutter/models/commande_produit.dart';
 import 'package:gestion_produit_flutter/models/livraison.dart';
@@ -9,7 +10,7 @@ import '../models/produit.dart';
 import '../models/utilisateur.dart' as user;
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.1.11:8081';
+  static const String baseUrl = 'http://192.168.1.12:8081';
   static const _storage = FlutterSecureStorage();
 
   // Helper method to get the JWT token from secure storage
@@ -648,6 +649,89 @@ class ApiService {
         return Livraison.fromJson(jsonDecode(response.body));
       } else if (response.statusCode == 401) {
         throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
+        throw Exception('Erreur HTTP : ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Erreur : $e');
+    }
+  }
+
+  // Replace the existing createSecretCode method in ApiService class
+  Future<CodeSecretClient> createSecretCode(int utilisateurId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/api/code-secret/create'),
+            headers: headers,
+            body: jsonEncode(utilisateurId),
+          )
+          .timeout(const Duration(seconds: 5));
+      print('createSecretCode: status=${response.statusCode}, body=${response.body}');
+      if (response.statusCode == 200) {
+        return CodeSecretClient.fromJson(jsonDecode(response.body));
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
+        throw Exception('Erreur HTTP : ${response.statusCode}, body: ${response.body}');
+      }
+    } catch (e) {
+      print('createSecretCode error: $e');
+      throw Exception('Erreur lors de la création du code secret : $e');
+    }
+  }
+
+    Future<CodeSecretClient?> getSecretCode(int utilisateurId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http
+          .get(
+            Uri.parse('$baseUrl/api/code-secret/$utilisateurId'),
+            headers: headers,
+          )
+          .timeout(const Duration(seconds: 5));
+      print('getSecretCode: status=${response.statusCode}, body=${response.body}');
+      if (response.statusCode == 200) {
+        return CodeSecretClient.fromJson(jsonDecode(response.body));
+      } else if (response.statusCode == 404) {
+        print('No secret code found for utilisateurId: $utilisateurId');
+        return null;
+      } else if (response.statusCode == 401) {
+        throw Exception('Non autorisé : Veuillez vous reconnecter');
+      } else {
+        throw Exception('Erreur HTTP : ${response.statusCode}, body: ${response.body}');
+      }
+    } catch (e) {
+      print('getSecretCode error: $e');
+      throw Exception('Erreur lors de la récupération du code secret : $e');
+    }
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String dateNaissance,
+    required String codeSecret,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/api/utilisateurs/reset-password'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'email': email,
+          'dateNaissance': dateNaissance,
+          'codeSecret': codeSecret,
+          'newPassword': newPassword,
+        }),
+      ).timeout(const Duration(seconds: 5));
+
+      if (response.statusCode == 200) {
+        return;
+      } else if (response.statusCode == 401) {
+        throw Exception('Email, date de naissance ou code secret incorrect');
+      } else if (response.statusCode == 400) {
+        throw Exception('Données invalides');
       } else {
         throw Exception('Erreur HTTP : ${response.statusCode}');
       }
